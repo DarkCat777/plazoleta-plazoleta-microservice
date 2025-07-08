@@ -30,8 +30,11 @@ public class RestaurantController {
     private final CreateRestaurantUseCase createRestaurantUseCase;
     private final RestaurantMapper restaurantMapper;
 
-    @Operation(summary = "Crear restaurante", description = "Permite crear un restaurante si el usuario es OWNER")
-    @SecurityRequirement(name = "Bearer Auth")
+    @Operation(
+            summary = "Crear restaurante",
+            description = "Permite crear un restaurante si el usuario es OWNER",
+            security = @SecurityRequirement(name = "Bearer Auth")
+    )
     @ApiResponses(value = {
             @ApiResponse(responseCode = "201", description = "Restaurante creado exitosamente"),
             @ApiResponse(responseCode = "400", description = "El ID del propietario no es válido",

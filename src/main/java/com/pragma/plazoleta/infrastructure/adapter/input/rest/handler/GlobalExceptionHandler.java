@@ -1,6 +1,7 @@
 package com.pragma.plazoleta.infrastructure.adapter.input.rest.handler;
 
 import com.pragma.plazoleta.application.exception.CategoryNotFoundException;
+import com.pragma.plazoleta.application.exception.DishNotFoundException;
 import com.pragma.plazoleta.application.exception.InvalidOwnerException;
 import com.pragma.plazoleta.application.exception.RestaurantNotFoundException;
 import com.pragma.plazoleta.infrastructure.adapter.input.dto.ErrorResponse;
@@ -20,6 +21,12 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponse> handleInvalidOwner(
             InvalidOwnerException ex, HttpServletRequest request) {
         return buildResponse(HttpStatus.BAD_REQUEST, "Propietario inválido", ex.getMessage(), request);
+    }
+
+    @ExceptionHandler(DishNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleDishNotFound(
+            DishNotFoundException ex, HttpServletRequest request) {
+        return buildResponse(HttpStatus.NOT_FOUND, "Plato no encontrado", ex.getMessage(), request);
     }
 
     @ExceptionHandler(CategoryNotFoundException.class)

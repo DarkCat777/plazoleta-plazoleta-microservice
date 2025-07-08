@@ -7,6 +7,8 @@ import com.pragma.plazoleta.infrastructure.adapter.output.repository.JpaDishRepo
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
+import java.util.Optional;
+
 @Component
 @RequiredArgsConstructor
 public class DishRepositoryAdapter implements DishRepository {
@@ -17,5 +19,10 @@ public class DishRepositoryAdapter implements DishRepository {
     @Override
     public Dish save(Dish dish) {
         return dishMapper.toDomain(dishRepository.save(dishMapper.toEntity(dish)));
+    }
+
+    @Override
+    public Optional<Dish> findById(Long dishId) {
+        return dishRepository.findById(dishId).map(dishMapper::toDomain);
     }
 }

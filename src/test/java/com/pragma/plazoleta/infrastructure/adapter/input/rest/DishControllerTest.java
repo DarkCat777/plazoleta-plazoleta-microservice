@@ -2,12 +2,16 @@ package com.pragma.plazoleta.infrastructure.adapter.input.rest;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.pragma.plazoleta.application.dto.CreateDishCommand;
+import com.pragma.plazoleta.application.dto.UpdateDishCommand;
 import com.pragma.plazoleta.application.exception.CategoryNotFoundException;
+import com.pragma.plazoleta.application.exception.DishNotFoundException;
 import com.pragma.plazoleta.application.exception.InvalidOwnerException;
 import com.pragma.plazoleta.application.exception.RestaurantNotFoundException;
 import com.pragma.plazoleta.application.port.input.CreateDishUseCase;
+import com.pragma.plazoleta.application.port.input.UpdateDishUseCase;
 import com.pragma.plazoleta.config.TestSecurityConfig;
 import com.pragma.plazoleta.domain.model.Dish;
+import com.pragma.plazoleta.infrastructure.adapter.input.dto.CategoryResponse;
 import com.pragma.plazoleta.infrastructure.adapter.input.dto.DishResponse;
 import com.pragma.plazoleta.infrastructure.adapter.input.rest.handler.GlobalExceptionHandler;
 import com.pragma.plazoleta.infrastructure.adapter.input.security.JwtAuthenticationRequestFilter;
@@ -24,8 +28,10 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.eq;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -40,6 +46,9 @@ class DishControllerTest {
 
     @MockitoBean
     private CreateDishUseCase createDishUseCase;
+
+    @MockitoBean
+    private UpdateDishUseCase updateDishUseCase;
 
     @MockitoBean
     private DishMapper dishMapper;
@@ -124,4 +133,54 @@ class DishControllerTest {
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.error").value("Restaurante no encontrado"));
     }
+
+    @Test
+    void shouldUpdateDishSuccessfully() throws Exception {
+        Long dishId = 1L;
+        UpdateDishCommand command = new UpdateDishCommand(1800, "Nueva descripción");
+        Dish dish = Dish.builder().id(dishId).description("Nueva descripción").price(1800).build();
+        DishResponse response = new DishResponse(dishId, "Plato", 1800, "Nueva descripción", "url", true, 1L, new CategoryResponse());
+
+        when(updateDishUseCase.updateDish(eq(dishId), any())).thenReturn(dish);
+        when(dishMapper.toResponse(dish)).thenReturn(response);
+
+        mockMvc.perform(put("/api/v1/dishes/{dishId}", dishId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(command)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(dishId))
+                .andExpect(jsonPath("$.description").value("Nueva descripción"))
+                .andExpect(jsonPath("$.price").value(1800));
+    }
+
+    @Test
+    void shouldReturn404WhenDishNotFound() throws Exception {
+        Long dishId = 1L;
+        UpdateDishCommand command = new UpdateDishCommand(1800, "Nueva descripción");
+
+        when(updateDishUseCase.updateDish(eq(dishId), any()))
+                .thenThrow(new DishNotFoundException(dishId));
+
+        mockMvc.perform(put("/api/v1/dishes/{dishId}", dishId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(command)))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.error").value("Plato no encontrado"));
+    }
+
+    @Test
+    void shouldReturn400WhenNotOwner() throws Exception {
+        Long dishId = 1L;
+        UpdateDishCommand command = new UpdateDishCommand(1800, "Nueva descripción");
+
+        when(updateDishUseCase.updateDish(eq(dishId), any()))
+                .thenThrow(new InvalidOwnerException("No autorizado"));
+
+        mockMvc.perform(put("/api/v1/dishes/{dishId}", dishId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(command)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error").value("Propietario inválido"));
+    }
+
 }
