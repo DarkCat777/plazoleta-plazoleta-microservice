@@ -7,6 +7,8 @@ import com.pragma.plazoleta.infrastructure.adapter.output.repository.JpaRestaura
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
+import java.util.Optional;
+
 @Component
 @RequiredArgsConstructor
 public class RestaurantRepositoryAdapter implements RestaurantRepository {
@@ -18,5 +20,11 @@ public class RestaurantRepositoryAdapter implements RestaurantRepository {
     public Restaurant save(Restaurant restaurant) {
         return mapper.toDomain(repository.save(mapper.toEntity(restaurant)));
     }
+
+    @Override
+    public Optional<Restaurant> findById(Long restaurantId) {
+        return repository.findById(restaurantId).map(mapper::toDomain);
+    }
+
 }
 

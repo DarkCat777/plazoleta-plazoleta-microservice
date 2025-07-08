@@ -6,4 +6,5 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface JpaRestaurantRepository extends JpaRepository<JpaRestaurantEntity, Long> {
+    boolean existsByIdAndOwnerId(Long restaurantId, Long ownerId);
 }
