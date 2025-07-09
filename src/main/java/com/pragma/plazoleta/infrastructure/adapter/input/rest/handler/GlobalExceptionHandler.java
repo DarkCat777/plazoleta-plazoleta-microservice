@@ -1,9 +1,6 @@
 package com.pragma.plazoleta.infrastructure.adapter.input.rest.handler;
 
-import com.pragma.plazoleta.application.exception.CategoryNotFoundException;
-import com.pragma.plazoleta.application.exception.DishNotFoundException;
-import com.pragma.plazoleta.application.exception.InvalidOwnerException;
-import com.pragma.plazoleta.application.exception.RestaurantNotFoundException;
+import com.pragma.plazoleta.application.exception.*;
 import com.pragma.plazoleta.infrastructure.adapter.input.rest.response.ErrorResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpStatus;
@@ -16,6 +13,18 @@ import java.time.LocalDateTime;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+
+    @ExceptionHandler(UserNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleUserNotFound(
+            UserNotFoundException ex, HttpServletRequest request) {
+        return buildResponse(HttpStatus.NOT_FOUND, "Usuario no encontrado", ex.getMessage(), request);
+    }
+
+    @ExceptionHandler(ExternalServiceException.class)
+    public ResponseEntity<ErrorResponse> handleExternalServiceError(
+            ExternalServiceException ex, HttpServletRequest request) {
+        return buildResponse(HttpStatus.BAD_GATEWAY, "Error en servicio externo", ex.getMessage(), request);
+    }
 
     @ExceptionHandler(InvalidOwnerException.class)
     public ResponseEntity<ErrorResponse> handleInvalidOwner(
