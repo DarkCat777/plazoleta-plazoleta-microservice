@@ -1,12 +1,17 @@
 package com.pragma.plazoleta.infrastructure.adapter.input.rest;
 
 import com.pragma.plazoleta.application.dto.CreateRestaurantCommand;
+import com.pragma.plazoleta.application.dto.PaginatedResult;
+import com.pragma.plazoleta.application.dto.PaginationQuery;
 import com.pragma.plazoleta.domain.model.Restaurant;
 import com.pragma.plazoleta.application.port.input.CreateRestaurantUseCase;
-import com.pragma.plazoleta.infrastructure.adapter.input.dto.ErrorResponse;
-import com.pragma.plazoleta.infrastructure.adapter.input.dto.RestaurantResponse;
+import com.pragma.plazoleta.application.port.input.FindPaginatedRestaurantUseCase;
+import com.pragma.plazoleta.infrastructure.adapter.input.rest.response.ErrorResponse;
+import com.pragma.plazoleta.infrastructure.adapter.input.rest.response.RestaurantItemPageResponse;
+import com.pragma.plazoleta.infrastructure.adapter.input.rest.response.RestaurantResponse;
 import com.pragma.plazoleta.infrastructure.adapter.mapper.RestaurantResponseMapper;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -17,10 +22,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/v1/restaurants")
@@ -28,6 +30,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class RestaurantController {
 
     private final CreateRestaurantUseCase createRestaurantUseCase;
+    private final FindPaginatedRestaurantUseCase findPaginatedRestaurantUseCase;
     private final RestaurantResponseMapper restaurantMapper;
 
     @Operation(
@@ -47,6 +50,33 @@ public class RestaurantController {
     public ResponseEntity<RestaurantResponse> createRestaurant(@Validated @RequestBody CreateRestaurantCommand request) {
         Restaurant restaurant = createRestaurantUseCase.createRestaurant(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(restaurantMapper.toResponse(restaurant));
+    }
+
+    @Operation(
+            summary = "Obtener restaurantes paginados",
+            description = "Permite a un usuario con rol CUSTOMER obtener una lista paginada de restaurantes registrados en el sistema.",
+            security = @SecurityRequirement(name = "Bearer Auth"),
+            parameters = {
+                    @Parameter(name = "page", description = "Número de página a recuperar (empezando desde 0)", example = "0"),
+                    @Parameter(name = "size", description = "Cantidad de elementos por página", example = "10")
+            }
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "201", description = "Lista de restaurantes obtenida exitosamente",
+                    content = @Content(mediaType = "application/json")),
+            @ApiResponse(responseCode = "403", description = "Acceso denegado. El usuario no tiene el rol requerido",
+                    content = @Content),
+            @ApiResponse(responseCode = "500", description = "Error interno del servidor",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    })
+    @PreAuthorize("hasRole('CUSTOMER')")
+    @GetMapping
+    public ResponseEntity<PaginatedResult<RestaurantItemPageResponse>> getPaginatedRestaurants(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size
+    ) {
+        PaginatedResult<Restaurant> restaurantPage = findPaginatedRestaurantUseCase.findAllPaginated(PaginationQuery.of(page, size));
+        return ResponseEntity.status(HttpStatus.CREATED).body(restaurantPage.map(restaurantMapper::toItemPageResponse));
     }
 
 }

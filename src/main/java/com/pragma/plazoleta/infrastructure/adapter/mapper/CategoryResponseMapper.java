@@ -2,7 +2,7 @@ package com.pragma.plazoleta.infrastructure.adapter.mapper;
 
 
 import com.pragma.plazoleta.domain.model.Category;
-import com.pragma.plazoleta.infrastructure.adapter.input.dto.CategoryResponse;
+import com.pragma.plazoleta.infrastructure.adapter.input.rest.response.CategoryResponse;
 import org.mapstruct.Mapper;
 import org.mapstruct.MappingConstants;
 

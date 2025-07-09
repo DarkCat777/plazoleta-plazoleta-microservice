@@ -7,8 +7,8 @@ import com.pragma.plazoleta.application.port.input.UpdateActiveOrInactiveDishUse
 import com.pragma.plazoleta.domain.model.Dish;
 import com.pragma.plazoleta.application.port.input.CreateDishUseCase;
 import com.pragma.plazoleta.application.port.input.UpdateDishUseCase;
-import com.pragma.plazoleta.infrastructure.adapter.input.dto.DishResponse;
-import com.pragma.plazoleta.infrastructure.adapter.input.dto.ErrorResponse;
+import com.pragma.plazoleta.infrastructure.adapter.input.rest.response.DishResponse;
+import com.pragma.plazoleta.infrastructure.adapter.input.rest.response.ErrorResponse;
 import com.pragma.plazoleta.infrastructure.adapter.mapper.DishResponseMapper;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;

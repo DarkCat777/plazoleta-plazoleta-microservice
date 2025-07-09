@@ -4,7 +4,7 @@ import com.pragma.plazoleta.application.exception.CategoryNotFoundException;
 import com.pragma.plazoleta.application.exception.DishNotFoundException;
 import com.pragma.plazoleta.application.exception.InvalidOwnerException;
 import com.pragma.plazoleta.application.exception.RestaurantNotFoundException;
-import com.pragma.plazoleta.infrastructure.adapter.input.dto.ErrorResponse;
+import com.pragma.plazoleta.infrastructure.adapter.input.rest.response.ErrorResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

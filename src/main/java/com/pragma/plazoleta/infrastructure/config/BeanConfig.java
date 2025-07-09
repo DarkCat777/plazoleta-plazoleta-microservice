@@ -1,13 +1,7 @@
 package com.pragma.plazoleta.infrastructure.config;
 
-import com.pragma.plazoleta.application.port.input.UpdateActiveOrInactiveDishUseCase;
-import com.pragma.plazoleta.application.service.CreateDishUseCaseImpl;
-import com.pragma.plazoleta.application.service.CreateRestaurantUseCaseImpl;
-import com.pragma.plazoleta.application.service.UpdateActiveOrInactiveDishUseCaseImpl;
-import com.pragma.plazoleta.application.service.UpdateDishUseCaseImpl;
-import com.pragma.plazoleta.application.port.input.CreateDishUseCase;
-import com.pragma.plazoleta.application.port.input.CreateRestaurantUseCase;
-import com.pragma.plazoleta.application.port.input.UpdateDishUseCase;
+import com.pragma.plazoleta.application.port.input.*;
+import com.pragma.plazoleta.application.service.*;
 import com.pragma.plazoleta.domain.port.output.*;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -20,6 +14,13 @@ public class BeanConfig {
             OwnerValidatorPort ownerValidatorPort
     ) {
         return new CreateRestaurantUseCaseImpl(restaurantRepository, ownerValidatorPort);
+    }
+
+    @Bean
+    public FindPaginatedRestaurantUseCase findPaginatedRestaurantUseCase(
+            RestaurantRepositoryPort restaurantRepository
+    ) {
+        return new FindPaginatedRestaurantUseCaseImpl(restaurantRepository);
     }
 
     @Bean
@@ -45,11 +46,7 @@ public class BeanConfig {
             OwnerValidatorPort ownerValidatorPort,
             UserPort userPort
     ) {
-        return new UpdateDishUseCaseImpl(
-                dishRepository,
-                ownerValidatorPort,
-                userPort
-        );
+        return new UpdateDishUseCaseImpl(dishRepository, ownerValidatorPort, userPort);
     }
 
     @Bean
