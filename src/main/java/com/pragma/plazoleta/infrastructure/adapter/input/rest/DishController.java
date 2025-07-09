@@ -1,10 +1,12 @@
 package com.pragma.plazoleta.infrastructure.adapter.input.rest;
 
 import com.pragma.plazoleta.application.dto.CreateDishCommand;
+import com.pragma.plazoleta.application.dto.UpdateActiveOrInactiveCommand;
 import com.pragma.plazoleta.application.dto.UpdateDishCommand;
+import com.pragma.plazoleta.application.port.input.UpdateActiveOrInactiveDishUseCase;
 import com.pragma.plazoleta.domain.model.Dish;
-import com.pragma.plazoleta.domain.port.input.CreateDishUseCase;
-import com.pragma.plazoleta.domain.port.input.UpdateDishUseCase;
+import com.pragma.plazoleta.application.port.input.CreateDishUseCase;
+import com.pragma.plazoleta.application.port.input.UpdateDishUseCase;
 import com.pragma.plazoleta.infrastructure.adapter.input.dto.DishResponse;
 import com.pragma.plazoleta.infrastructure.adapter.input.dto.ErrorResponse;
 import com.pragma.plazoleta.infrastructure.adapter.mapper.DishResponseMapper;
@@ -28,6 +30,7 @@ public class DishController {
 
     private final CreateDishUseCase createDishUseCase;
     private final UpdateDishUseCase updateDishUseCase;
+    private final UpdateActiveOrInactiveDishUseCase updateActiveOrInactiveDishUseCase;
     private final DishResponseMapper dishMapper;
 
 
@@ -78,5 +81,26 @@ public class DishController {
     ) {
         Dish dish = updateDishUseCase.updateDish(dishId, command);
         return ResponseEntity.ok(dishMapper.toResponse(dish));
+    }
+
+    @Operation(
+            summary = "Actualizar estado activo/inactivo de un plato",
+            description = "Permite al propietario cambiar el estado del plato",
+            security = @SecurityRequirement(name = "Bearer Auth")
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Estado del plato actualizado exitosamente"),
+            @ApiResponse(responseCode = "400", description = "Usuario no autorizado o datos inválidos", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "404", description = "Plato no encontrado", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "500", description = "Error interno del servidor", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    })
+    @PreAuthorize("hasRole('OWNER')")
+    @PatchMapping("/{dishId}/status")
+    public ResponseEntity<DishResponse> updateDishStatus(
+            @PathVariable Long dishId,
+            @Validated @RequestBody UpdateActiveOrInactiveCommand command
+    ) {
+        Dish updatedDish = updateActiveOrInactiveDishUseCase.updateDishActiveOrInactive(dishId, command);
+        return ResponseEntity.ok(dishMapper.toResponse(updatedDish));
     }
 }

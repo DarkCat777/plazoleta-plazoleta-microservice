@@ -2,15 +2,17 @@ package com.pragma.plazoleta.infrastructure.adapter.input.rest;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.pragma.plazoleta.application.dto.CreateDishCommand;
+import com.pragma.plazoleta.application.dto.UpdateActiveOrInactiveCommand;
 import com.pragma.plazoleta.application.dto.UpdateDishCommand;
 import com.pragma.plazoleta.application.exception.CategoryNotFoundException;
 import com.pragma.plazoleta.application.exception.DishNotFoundException;
 import com.pragma.plazoleta.application.exception.InvalidOwnerException;
 import com.pragma.plazoleta.application.exception.RestaurantNotFoundException;
+import com.pragma.plazoleta.application.port.input.UpdateActiveOrInactiveDishUseCase;
 import com.pragma.plazoleta.config.TestSecurityConfig;
 import com.pragma.plazoleta.domain.model.Dish;
-import com.pragma.plazoleta.domain.port.input.CreateDishUseCase;
-import com.pragma.plazoleta.domain.port.input.UpdateDishUseCase;
+import com.pragma.plazoleta.application.port.input.CreateDishUseCase;
+import com.pragma.plazoleta.application.port.input.UpdateDishUseCase;
 import com.pragma.plazoleta.infrastructure.adapter.input.dto.CategoryResponse;
 import com.pragma.plazoleta.infrastructure.adapter.input.dto.DishResponse;
 import com.pragma.plazoleta.infrastructure.adapter.input.rest.handler.GlobalExceptionHandler;
@@ -30,8 +32,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.eq;
 import static org.mockito.Mockito.when;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -49,6 +50,9 @@ class DishControllerTest {
 
     @MockitoBean
     private UpdateDishUseCase updateDishUseCase;
+
+    @MockitoBean
+    private UpdateActiveOrInactiveDishUseCase updateActiveOrInactiveDishUseCase;
 
     @MockitoBean
     private DishResponseMapper dishMapper;
@@ -181,6 +185,60 @@ class DishControllerTest {
                         .content(objectMapper.writeValueAsString(command)))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.error").value("Propietario inválido"));
+    }
+
+    @Test
+    @WithMockUser(roles = "OWNER")
+    void shouldUpdateDishStatusSuccessfully() throws Exception {
+        Long dishId = 5L;
+        UpdateActiveOrInactiveCommand command = new UpdateActiveOrInactiveCommand();
+        command.setActive(false);
+
+        Dish updatedDish = Dish.builder()
+                .id(dishId)
+                .name("Sopa de verduras")
+                .price(10000)
+                .description("Sopa casera")
+                .imageUrl("https://img.com/sopa.jpg")
+                .active(false)
+                .build();
+
+        DishResponse response = new DishResponse(
+                dishId, "Sopa de verduras", 10000, "Sopa casera", "https://img.com/sopa.jpg", false, 1L, new CategoryResponse()
+        );
+
+        when(updateActiveOrInactiveDishUseCase.updateDishActiveOrInactive(eq(dishId), any()))
+                .thenReturn(updatedDish);
+        when(dishMapper.toResponse(updatedDish)).thenReturn(response);
+
+        mockMvc.perform(
+                        patch("/api/v1/dishes/{dishId}/status", dishId)
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(command))
+                )
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(dishId))
+                .andExpect(jsonPath("$.active").value(false));
+    }
+
+    @Test
+    @WithMockUser(roles = "OWNER")
+    void shouldReturn404WhenUpdatingNonExistentDishStatus() throws Exception {
+        Long dishId = 999L;
+        UpdateActiveOrInactiveCommand command = new UpdateActiveOrInactiveCommand();
+        command.setActive(true);
+
+        when(updateActiveOrInactiveDishUseCase.updateDishActiveOrInactive(eq(dishId), any()))
+                .thenThrow(new DishNotFoundException(dishId));
+
+        mockMvc.perform(
+                        patch("/api/v1/dishes/{dishId}/status", dishId)
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(command))
+                )
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.error").value("Plato no encontrado"))
+                .andExpect(jsonPath("$.message").value("No existe el plato con el ID: " + dishId));
     }
 
 }

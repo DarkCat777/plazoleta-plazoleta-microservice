@@ -1,11 +1,13 @@
 package com.pragma.plazoleta.infrastructure.config;
 
+import com.pragma.plazoleta.application.port.input.UpdateActiveOrInactiveDishUseCase;
 import com.pragma.plazoleta.application.service.CreateDishUseCaseImpl;
 import com.pragma.plazoleta.application.service.CreateRestaurantUseCaseImpl;
+import com.pragma.plazoleta.application.service.UpdateActiveOrInactiveDishUseCaseImpl;
 import com.pragma.plazoleta.application.service.UpdateDishUseCaseImpl;
-import com.pragma.plazoleta.domain.port.input.CreateDishUseCase;
-import com.pragma.plazoleta.domain.port.input.CreateRestaurantUseCase;
-import com.pragma.plazoleta.domain.port.input.UpdateDishUseCase;
+import com.pragma.plazoleta.application.port.input.CreateDishUseCase;
+import com.pragma.plazoleta.application.port.input.CreateRestaurantUseCase;
+import com.pragma.plazoleta.application.port.input.UpdateDishUseCase;
 import com.pragma.plazoleta.domain.port.output.*;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -48,5 +50,14 @@ public class BeanConfig {
                 ownerValidatorPort,
                 userPort
         );
+    }
+
+    @Bean
+    public UpdateActiveOrInactiveDishUseCase updateActiveOrInactiveDishUseCase(
+            DishRepositoryPort dishRepository,
+            OwnerValidatorPort ownerValidatorPort,
+            UserPort userPort
+    ) {
+        return new UpdateActiveOrInactiveDishUseCaseImpl(dishRepository, ownerValidatorPort, userPort);
     }
 }

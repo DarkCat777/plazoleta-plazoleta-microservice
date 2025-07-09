@@ -5,7 +5,7 @@ import com.pragma.plazoleta.application.dto.CreateRestaurantCommand;
 import com.pragma.plazoleta.application.exception.InvalidOwnerException;
 import com.pragma.plazoleta.config.TestSecurityConfig;
 import com.pragma.plazoleta.domain.model.Restaurant;
-import com.pragma.plazoleta.domain.port.input.CreateRestaurantUseCase;
+import com.pragma.plazoleta.application.port.input.CreateRestaurantUseCase;
 import com.pragma.plazoleta.infrastructure.adapter.input.dto.RestaurantResponse;
 import com.pragma.plazoleta.infrastructure.adapter.input.rest.handler.GlobalExceptionHandler;
 import com.pragma.plazoleta.infrastructure.adapter.input.security.JwtAuthenticationRequestFilter;
