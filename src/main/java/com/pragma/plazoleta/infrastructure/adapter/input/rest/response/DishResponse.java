@@ -1,4 +1,4 @@
-package com.pragma.plazoleta.infrastructure.adapter.input.dto;
+package com.pragma.plazoleta.infrastructure.adapter.input.rest.response;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
