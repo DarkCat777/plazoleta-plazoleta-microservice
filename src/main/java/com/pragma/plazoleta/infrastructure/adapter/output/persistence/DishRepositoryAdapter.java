@@ -11,7 +11,7 @@ import java.util.Optional;
 
 @Component
 @RequiredArgsConstructor
-public class DishRepositoryPortAdapter implements DishRepositoryPort {
+public class DishRepositoryAdapter implements DishRepositoryPort {
 
     private final JpaDishRepository dishRepository;
     private final DishEntityMapper dishMapper;

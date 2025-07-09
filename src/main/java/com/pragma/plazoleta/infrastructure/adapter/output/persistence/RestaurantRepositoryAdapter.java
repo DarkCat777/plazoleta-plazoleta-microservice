@@ -11,7 +11,7 @@ import java.util.Optional;
 
 @Component
 @RequiredArgsConstructor
-public class RestaurantRepositoryPortAdapter implements RestaurantRepositoryPort {
+public class RestaurantRepositoryAdapter implements RestaurantRepositoryPort {
 
     private final JpaRestaurantRepository repository;
     private final RestaurantEntityMapper mapper;

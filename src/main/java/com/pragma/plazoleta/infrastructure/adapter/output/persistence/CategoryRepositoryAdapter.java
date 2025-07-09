@@ -11,7 +11,7 @@ import java.util.Optional;
 
 @Component
 @RequiredArgsConstructor
-public class CategoryRepositoryPortAdapter implements CategoryRepositoryPort {
+public class CategoryRepositoryAdapter implements CategoryRepositoryPort {
 
     private final JpaCategoryRepository categoryRepository;
     private final CategoryEntityMapper categoryMapper;
