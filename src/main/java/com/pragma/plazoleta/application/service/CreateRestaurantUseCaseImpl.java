@@ -2,7 +2,7 @@ package com.pragma.plazoleta.application.service;
 
 import com.pragma.plazoleta.application.dto.CreateRestaurantCommand;
 import com.pragma.plazoleta.application.exception.InvalidOwnerException;
-import com.pragma.plazoleta.domain.port.input.CreateRestaurantUseCase;
+import com.pragma.plazoleta.application.port.input.CreateRestaurantUseCase;
 import com.pragma.plazoleta.domain.model.Restaurant;
 import com.pragma.plazoleta.domain.port.output.OwnerValidatorPort;
 import com.pragma.plazoleta.domain.port.output.RestaurantRepositoryPort;

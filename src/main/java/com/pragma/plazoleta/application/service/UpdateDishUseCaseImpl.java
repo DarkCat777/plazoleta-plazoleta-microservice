@@ -4,7 +4,7 @@ import com.pragma.plazoleta.application.dto.UpdateDishCommand;
 import com.pragma.plazoleta.application.exception.DishNotFoundException;
 import com.pragma.plazoleta.application.exception.InvalidOwnerException;
 import com.pragma.plazoleta.domain.model.Dish;
-import com.pragma.plazoleta.domain.port.input.UpdateDishUseCase;
+import com.pragma.plazoleta.application.port.input.UpdateDishUseCase;
 import com.pragma.plazoleta.domain.port.output.DishRepositoryPort;
 import com.pragma.plazoleta.domain.port.output.OwnerValidatorPort;
 import com.pragma.plazoleta.domain.port.output.UserPort;

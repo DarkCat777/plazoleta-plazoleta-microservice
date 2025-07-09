@@ -4,7 +4,7 @@ import com.pragma.plazoleta.application.dto.CreateDishCommand;
 import com.pragma.plazoleta.application.exception.CategoryNotFoundException;
 import com.pragma.plazoleta.application.exception.InvalidOwnerException;
 import com.pragma.plazoleta.application.exception.RestaurantNotFoundException;
-import com.pragma.plazoleta.domain.port.input.CreateDishUseCase;
+import com.pragma.plazoleta.application.port.input.CreateDishUseCase;
 import com.pragma.plazoleta.domain.model.Category;
 import com.pragma.plazoleta.domain.model.Dish;
 import com.pragma.plazoleta.domain.model.Restaurant;
