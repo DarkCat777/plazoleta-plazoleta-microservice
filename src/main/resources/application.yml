@@ -15,7 +15,7 @@ spring:
 
 users:
   client:
-    url: localhost:8081/api/v1/users
+    url: localhost:8081/api/v1
 
 server:
   port: 8082
