@@ -3,13 +3,13 @@ package com.pragma.plazoleta.infrastructure.adapter.input.rest;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.pragma.plazoleta.application.dto.CreateRestaurantCommand;
 import com.pragma.plazoleta.application.exception.InvalidOwnerException;
-import com.pragma.plazoleta.application.port.input.CreateRestaurantUseCase;
 import com.pragma.plazoleta.config.TestSecurityConfig;
 import com.pragma.plazoleta.domain.model.Restaurant;
+import com.pragma.plazoleta.domain.port.input.CreateRestaurantUseCase;
 import com.pragma.plazoleta.infrastructure.adapter.input.dto.RestaurantResponse;
 import com.pragma.plazoleta.infrastructure.adapter.input.rest.handler.GlobalExceptionHandler;
 import com.pragma.plazoleta.infrastructure.adapter.input.security.JwtAuthenticationRequestFilter;
-import com.pragma.plazoleta.infrastructure.adapter.mapper.RestaurantMapper;
+import com.pragma.plazoleta.infrastructure.adapter.mapper.RestaurantResponseMapper;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
@@ -40,7 +40,7 @@ class RestaurantControllerTest {
     private CreateRestaurantUseCase createRestaurantUseCase;
 
     @MockitoBean
-    private RestaurantMapper restaurantMapper;
+    private RestaurantResponseMapper restaurantMapper;
 
     @Autowired
     private ObjectMapper objectMapper;

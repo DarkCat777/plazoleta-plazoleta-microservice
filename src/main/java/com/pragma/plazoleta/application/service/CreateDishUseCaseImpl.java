@@ -4,7 +4,7 @@ import com.pragma.plazoleta.application.dto.CreateDishCommand;
 import com.pragma.plazoleta.application.exception.CategoryNotFoundException;
 import com.pragma.plazoleta.application.exception.InvalidOwnerException;
 import com.pragma.plazoleta.application.exception.RestaurantNotFoundException;
-import com.pragma.plazoleta.application.port.input.CreateDishUseCase;
+import com.pragma.plazoleta.domain.port.input.CreateDishUseCase;
 import com.pragma.plazoleta.domain.model.Category;
 import com.pragma.plazoleta.domain.model.Dish;
 import com.pragma.plazoleta.domain.model.Restaurant;
@@ -12,11 +12,11 @@ import com.pragma.plazoleta.domain.port.output.*;
 import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
-public class CreateDishService implements CreateDishUseCase {
+public class CreateDishUseCaseImpl implements CreateDishUseCase {
 
-    private final DishRepository dishRepository;
-    private final CategoryRepository categoryRepository;
-    private final RestaurantRepository restaurantRepository;
+    private final DishRepositoryPort dishRepositoryPort;
+    private final CategoryRepositoryPort categoryRepositoryPort;
+    private final RestaurantRepositoryPort restaurantRepositoryPort;
     private final OwnerValidatorPort validator;
     private final UserPort userPort;
 
@@ -26,10 +26,10 @@ public class CreateDishService implements CreateDishUseCase {
             throw new InvalidOwnerException("Solo el propietario del restaurante puede crear platos.");
         }
 
-        Category category = categoryRepository.findById(command.getCategoryId())
+        Category category = categoryRepositoryPort.findById(command.getCategoryId())
                 .orElseThrow(() -> new CategoryNotFoundException(command.getCategoryId()));
 
-        Restaurant restaurant = restaurantRepository.findById(command.getRestaurantId())
+        Restaurant restaurant = restaurantRepositoryPort.findById(command.getRestaurantId())
                 .orElseThrow(() -> new RestaurantNotFoundException(command.getRestaurantId()));
 
         Dish dish = Dish.builder()
@@ -42,6 +42,6 @@ public class CreateDishService implements CreateDishUseCase {
                 .active(true)
                 .build();
 
-        return dishRepository.save(dish);
+        return dishRepositoryPort.save(dish);
     }
 }

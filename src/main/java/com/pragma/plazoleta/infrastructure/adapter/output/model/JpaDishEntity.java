@@ -17,7 +17,7 @@ public class JpaDishEntity {
     @Column(name = "nombre", nullable = false)
     private String name;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne
     @JoinColumn(name = "id_categoria", nullable = false)
     private JpaCategoryEntity category;
 
@@ -27,8 +27,9 @@ public class JpaDishEntity {
     @Column(name = "precio", nullable = false)
     private int price;
 
-    @Column(name = "id_restaurante", nullable = false)
-    private Long restaurantId;
+    @ManyToOne
+    @JoinColumn(name = "id_restaurante", nullable = false)
+    private JpaRestaurantEntity restaurant;
 
     @Column(name = "url_imagen", nullable = false)
     private String imageUrl;

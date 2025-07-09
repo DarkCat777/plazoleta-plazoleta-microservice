@@ -1,4 +1,4 @@
-package com.pragma.plazoleta.application.port.input;
+package com.pragma.plazoleta.domain.port.input;
 
 import com.pragma.plazoleta.application.dto.CreateDishCommand;
 import com.pragma.plazoleta.domain.model.Dish;

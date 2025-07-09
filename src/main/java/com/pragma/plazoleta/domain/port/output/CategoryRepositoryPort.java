@@ -4,6 +4,6 @@ import com.pragma.plazoleta.domain.model.Category;
 
 import java.util.Optional;
 
-public interface CategoryRepository {
+public interface CategoryRepositoryPort {
     Optional<Category> findById(Long categoryId);
 }

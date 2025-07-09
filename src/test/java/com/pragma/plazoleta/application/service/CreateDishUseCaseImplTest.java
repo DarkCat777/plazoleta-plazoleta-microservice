@@ -22,16 +22,16 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-class CreateDishServiceTest {
+class CreateDishUseCaseImplTest {
 
     @Mock
-    private DishRepository dishRepository;
+    private DishRepositoryPort dishRepositoryPort;
 
     @Mock
-    private CategoryRepository categoryRepository;
+    private CategoryRepositoryPort categoryRepositoryPort;
 
     @Mock
-    private RestaurantRepository restaurantRepository;
+    private RestaurantRepositoryPort restaurantRepositoryPort;
 
     @Mock
     private OwnerValidatorPort validator;
@@ -40,7 +40,7 @@ class CreateDishServiceTest {
     private UserPort userPort;
 
     @InjectMocks
-    private CreateDishService createDishService;
+    private CreateDishUseCaseImpl createDishUseCaseImpl;
 
     private CreateDishCommand command;
 
@@ -61,9 +61,9 @@ class CreateDishServiceTest {
 
         when(userPort.getAuthenticatedUserId()).thenReturn(ownerId);
         when(validator.isOwnerOfRestaurant(ownerId, command.getRestaurantId())).thenReturn(true);
-        when(categoryRepository.findById(command.getCategoryId()))
+        when(categoryRepositoryPort.findById(command.getCategoryId()))
                 .thenReturn(Optional.of(new Category(command.getCategoryId(), "Mariscos", "Comida del mar")));
-        when(restaurantRepository.findById(command.getRestaurantId()))
+        when(restaurantRepositoryPort.findById(command.getRestaurantId()))
                 .thenReturn(Optional.of(new Restaurant(command.getRestaurantId(), "La Mar", "Av. Peru", "123456789", "NIT123", "http://logo.com", ownerId)));
 
         Dish savedDish = Dish.builder()
@@ -75,14 +75,14 @@ class CreateDishServiceTest {
                 .active(true)
                 .build();
 
-        when(dishRepository.save(any(Dish.class))).thenReturn(savedDish);
+        when(dishRepositoryPort.save(any(Dish.class))).thenReturn(savedDish);
 
-        Dish result = createDishService.createDish(command);
+        Dish result = createDishUseCaseImpl.createDish(command);
 
         assertThat(result).isNotNull();
         assertThat(result.getName()).isEqualTo("Ceviche");
         assertThat(result.isActive()).isTrue();
-        verify(dishRepository).save(any(Dish.class));
+        verify(dishRepositoryPort).save(any(Dish.class));
     }
 
     @Test
@@ -90,7 +90,7 @@ class CreateDishServiceTest {
         when(userPort.getAuthenticatedUserId()).thenReturn(99L);
         when(validator.isOwnerOfRestaurant(99L, command.getRestaurantId())).thenReturn(false);
 
-        assertThatThrownBy(() -> createDishService.createDish(command))
+        assertThatThrownBy(() -> createDishUseCaseImpl.createDish(command))
                 .isInstanceOf(InvalidOwnerException.class)
                 .hasMessageContaining("Solo el propietario del restaurante puede crear platos.");
     }
@@ -99,9 +99,9 @@ class CreateDishServiceTest {
     void shouldThrowExceptionIfCategoryNotFound() {
         when(userPort.getAuthenticatedUserId()).thenReturn(1L);
         when(validator.isOwnerOfRestaurant(1L, command.getRestaurantId())).thenReturn(true);
-        when(categoryRepository.findById(command.getCategoryId())).thenReturn(Optional.empty());
+        when(categoryRepositoryPort.findById(command.getCategoryId())).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> createDishService.createDish(command))
+        assertThatThrownBy(() -> createDishUseCaseImpl.createDish(command))
                 .isInstanceOf(CategoryNotFoundException.class);
     }
 
@@ -109,11 +109,11 @@ class CreateDishServiceTest {
     void shouldThrowExceptionIfRestaurantNotFound() {
         when(userPort.getAuthenticatedUserId()).thenReturn(1L);
         when(validator.isOwnerOfRestaurant(1L, command.getRestaurantId())).thenReturn(true);
-        when(categoryRepository.findById(command.getCategoryId()))
+        when(categoryRepositoryPort.findById(command.getCategoryId()))
                 .thenReturn(Optional.of(new Category(1L, "Cat", "Desc")));
-        when(restaurantRepository.findById(command.getRestaurantId())).thenReturn(Optional.empty());
+        when(restaurantRepositoryPort.findById(command.getRestaurantId())).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> createDishService.createDish(command))
+        assertThatThrownBy(() -> createDishUseCaseImpl.createDish(command))
                 .isInstanceOf(RestaurantNotFoundException.class);
     }
 }

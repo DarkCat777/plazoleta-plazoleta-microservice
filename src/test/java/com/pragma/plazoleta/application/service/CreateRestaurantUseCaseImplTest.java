@@ -4,7 +4,7 @@ import com.pragma.plazoleta.application.dto.CreateRestaurantCommand;
 import com.pragma.plazoleta.application.exception.InvalidOwnerException;
 import com.pragma.plazoleta.domain.model.Restaurant;
 import com.pragma.plazoleta.domain.port.output.OwnerValidatorPort;
-import com.pragma.plazoleta.domain.port.output.RestaurantRepository;
+import com.pragma.plazoleta.domain.port.output.RestaurantRepositoryPort;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -15,15 +15,15 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-class CreateRestaurantServiceTest {
+class CreateRestaurantUseCaseImplTest {
     @Mock
-    private RestaurantRepository restaurantRepository;
+    private RestaurantRepositoryPort restaurantRepositoryPort;
 
     @Mock
     private OwnerValidatorPort ownerValidatorPort;
 
     @InjectMocks
-    private CreateRestaurantService createRestaurantService;
+    private CreateRestaurantUseCaseImpl createRestaurantUseCaseImpl;
 
     @Test
     void shouldCreateRestaurantWhenOwnerIsValid() {
@@ -43,16 +43,16 @@ class CreateRestaurantServiceTest {
                 .build();
 
         when(ownerValidatorPort.isOwner(command.getOwnerId())).thenReturn(true);
-        when(restaurantRepository.save(any(Restaurant.class))).thenReturn(expectedRestaurant);
+        when(restaurantRepositoryPort.save(any(Restaurant.class))).thenReturn(expectedRestaurant);
 
         // when
-        Restaurant result = createRestaurantService.createRestaurant(command);
+        Restaurant result = createRestaurantUseCaseImpl.createRestaurant(command);
 
         // then
         assertNotNull(result);
         assertEquals("Pizza Pragma", result.getName());
         verify(ownerValidatorPort).isOwner(command.getOwnerId());
-        verify(restaurantRepository).save(any(Restaurant.class));
+        verify(restaurantRepositoryPort).save(any(Restaurant.class));
     }
 
     @Test
@@ -68,11 +68,11 @@ class CreateRestaurantServiceTest {
         // when & then
         InvalidOwnerException exception = assertThrows(
                 InvalidOwnerException.class,
-                () -> createRestaurantService.createRestaurant(command)
+                () -> createRestaurantUseCaseImpl.createRestaurant(command)
         );
 
         assertEquals("El usuario no tiene el rol OWNER", exception.getMessage());
         verify(ownerValidatorPort).isOwner(command.getOwnerId());
-        verifyNoInteractions(restaurantRepository);
+        verifyNoInteractions(restaurantRepositoryPort);
     }
 }

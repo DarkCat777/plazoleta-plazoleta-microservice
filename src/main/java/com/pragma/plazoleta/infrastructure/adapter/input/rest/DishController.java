@@ -2,12 +2,12 @@ package com.pragma.plazoleta.infrastructure.adapter.input.rest;
 
 import com.pragma.plazoleta.application.dto.CreateDishCommand;
 import com.pragma.plazoleta.application.dto.UpdateDishCommand;
-import com.pragma.plazoleta.application.port.input.CreateDishUseCase;
-import com.pragma.plazoleta.application.port.input.UpdateDishUseCase;
 import com.pragma.plazoleta.domain.model.Dish;
+import com.pragma.plazoleta.domain.port.input.CreateDishUseCase;
+import com.pragma.plazoleta.domain.port.input.UpdateDishUseCase;
 import com.pragma.plazoleta.infrastructure.adapter.input.dto.DishResponse;
 import com.pragma.plazoleta.infrastructure.adapter.input.dto.ErrorResponse;
-import com.pragma.plazoleta.infrastructure.adapter.mapper.DishMapper;
+import com.pragma.plazoleta.infrastructure.adapter.mapper.DishResponseMapper;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -28,7 +28,8 @@ public class DishController {
 
     private final CreateDishUseCase createDishUseCase;
     private final UpdateDishUseCase updateDishUseCase;
-    private final DishMapper dishMapper;
+    private final DishResponseMapper dishMapper;
+
 
     @Operation(
             summary = "Crear plato",
@@ -46,7 +47,9 @@ public class DishController {
     })
     @PreAuthorize("hasRole('OWNER')")
     @PostMapping
-    public ResponseEntity<DishResponse> createDish(@Validated @RequestBody CreateDishCommand command) {
+    public ResponseEntity<DishResponse> createDish(
+            @Validated @RequestBody CreateDishCommand command
+    ) {
         Dish createdDish = createDishUseCase.createDish(command);
         return ResponseEntity.status(HttpStatus.CREATED).body(dishMapper.toResponse(createdDish));
     }

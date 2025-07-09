@@ -7,15 +7,15 @@ import com.pragma.plazoleta.application.exception.CategoryNotFoundException;
 import com.pragma.plazoleta.application.exception.DishNotFoundException;
 import com.pragma.plazoleta.application.exception.InvalidOwnerException;
 import com.pragma.plazoleta.application.exception.RestaurantNotFoundException;
-import com.pragma.plazoleta.application.port.input.CreateDishUseCase;
-import com.pragma.plazoleta.application.port.input.UpdateDishUseCase;
 import com.pragma.plazoleta.config.TestSecurityConfig;
 import com.pragma.plazoleta.domain.model.Dish;
+import com.pragma.plazoleta.domain.port.input.CreateDishUseCase;
+import com.pragma.plazoleta.domain.port.input.UpdateDishUseCase;
 import com.pragma.plazoleta.infrastructure.adapter.input.dto.CategoryResponse;
 import com.pragma.plazoleta.infrastructure.adapter.input.dto.DishResponse;
 import com.pragma.plazoleta.infrastructure.adapter.input.rest.handler.GlobalExceptionHandler;
 import com.pragma.plazoleta.infrastructure.adapter.input.security.JwtAuthenticationRequestFilter;
-import com.pragma.plazoleta.infrastructure.adapter.mapper.DishMapper;
+import com.pragma.plazoleta.infrastructure.adapter.mapper.DishResponseMapper;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
@@ -51,7 +51,7 @@ class DishControllerTest {
     private UpdateDishUseCase updateDishUseCase;
 
     @MockitoBean
-    private DishMapper dishMapper;
+    private DishResponseMapper dishMapper;
 
     @Autowired
     private ObjectMapper objectMapper;

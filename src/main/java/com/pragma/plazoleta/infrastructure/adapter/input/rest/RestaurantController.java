@@ -1,11 +1,11 @@
 package com.pragma.plazoleta.infrastructure.adapter.input.rest;
 
 import com.pragma.plazoleta.application.dto.CreateRestaurantCommand;
-import com.pragma.plazoleta.application.port.input.CreateRestaurantUseCase;
 import com.pragma.plazoleta.domain.model.Restaurant;
+import com.pragma.plazoleta.domain.port.input.CreateRestaurantUseCase;
 import com.pragma.plazoleta.infrastructure.adapter.input.dto.ErrorResponse;
 import com.pragma.plazoleta.infrastructure.adapter.input.dto.RestaurantResponse;
-import com.pragma.plazoleta.infrastructure.adapter.mapper.RestaurantMapper;
+import com.pragma.plazoleta.infrastructure.adapter.mapper.RestaurantResponseMapper;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -28,7 +28,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class RestaurantController {
 
     private final CreateRestaurantUseCase createRestaurantUseCase;
-    private final RestaurantMapper restaurantMapper;
+    private final RestaurantResponseMapper restaurantMapper;
 
     @Operation(
             summary = "Crear restaurante",

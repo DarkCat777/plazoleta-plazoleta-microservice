@@ -1,11 +1,11 @@
 package com.pragma.plazoleta.infrastructure.config;
 
-import com.pragma.plazoleta.application.port.input.CreateDishUseCase;
-import com.pragma.plazoleta.application.port.input.CreateRestaurantUseCase;
-import com.pragma.plazoleta.application.port.input.UpdateDishUseCase;
-import com.pragma.plazoleta.application.service.CreateDishService;
-import com.pragma.plazoleta.application.service.CreateRestaurantService;
-import com.pragma.plazoleta.application.service.UpdateDishService;
+import com.pragma.plazoleta.application.service.CreateDishUseCaseImpl;
+import com.pragma.plazoleta.application.service.CreateRestaurantUseCaseImpl;
+import com.pragma.plazoleta.application.service.UpdateDishUseCaseImpl;
+import com.pragma.plazoleta.domain.port.input.CreateDishUseCase;
+import com.pragma.plazoleta.domain.port.input.CreateRestaurantUseCase;
+import com.pragma.plazoleta.domain.port.input.UpdateDishUseCase;
 import com.pragma.plazoleta.domain.port.output.*;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -14,21 +14,21 @@ import org.springframework.context.annotation.Configuration;
 public class BeanConfig {
     @Bean
     public CreateRestaurantUseCase createRestaurantUseCase(
-            RestaurantRepository restaurantRepository,
+            RestaurantRepositoryPort restaurantRepository,
             OwnerValidatorPort ownerValidatorPort
     ) {
-        return new CreateRestaurantService(restaurantRepository, ownerValidatorPort);
+        return new CreateRestaurantUseCaseImpl(restaurantRepository, ownerValidatorPort);
     }
 
     @Bean
     public CreateDishUseCase createDishUseCase(
-            DishRepository dishRepository,
-            CategoryRepository categoryRepository,
-            RestaurantRepository restaurantRepository,
+            DishRepositoryPort dishRepository,
+            CategoryRepositoryPort categoryRepository,
+            RestaurantRepositoryPort restaurantRepository,
             OwnerValidatorPort ownerValidatorPort,
             UserPort userPort
     ) {
-        return new CreateDishService(
+        return new CreateDishUseCaseImpl(
                 dishRepository,
                 categoryRepository,
                 restaurantRepository,
@@ -39,11 +39,11 @@ public class BeanConfig {
 
     @Bean
     public UpdateDishUseCase updateDishUseCase(
-            DishRepository dishRepository,
+            DishRepositoryPort dishRepository,
             OwnerValidatorPort ownerValidatorPort,
             UserPort userPort
     ) {
-        return new UpdateDishService(
+        return new UpdateDishUseCaseImpl(
                 dishRepository,
                 ownerValidatorPort,
                 userPort

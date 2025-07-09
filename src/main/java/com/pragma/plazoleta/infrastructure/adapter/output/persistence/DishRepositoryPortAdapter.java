@@ -1,8 +1,8 @@
 package com.pragma.plazoleta.infrastructure.adapter.output.persistence;
 
 import com.pragma.plazoleta.domain.model.Dish;
-import com.pragma.plazoleta.domain.port.output.DishRepository;
-import com.pragma.plazoleta.infrastructure.adapter.mapper.DishMapper;
+import com.pragma.plazoleta.domain.port.output.DishRepositoryPort;
+import com.pragma.plazoleta.infrastructure.adapter.mapper.DishEntityMapper;
 import com.pragma.plazoleta.infrastructure.adapter.output.repository.JpaDishRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -11,10 +11,10 @@ import java.util.Optional;
 
 @Component
 @RequiredArgsConstructor
-public class DishRepositoryAdapter implements DishRepository {
+public class DishRepositoryPortAdapter implements DishRepositoryPort {
 
     private final JpaDishRepository dishRepository;
-    private final DishMapper dishMapper;
+    private final DishEntityMapper dishMapper;
 
     @Override
     public Dish save(Dish dish) {

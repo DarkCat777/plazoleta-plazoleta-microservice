@@ -2,16 +2,16 @@ package com.pragma.plazoleta.application.service;
 
 import com.pragma.plazoleta.application.dto.CreateRestaurantCommand;
 import com.pragma.plazoleta.application.exception.InvalidOwnerException;
-import com.pragma.plazoleta.application.port.input.CreateRestaurantUseCase;
+import com.pragma.plazoleta.domain.port.input.CreateRestaurantUseCase;
 import com.pragma.plazoleta.domain.model.Restaurant;
 import com.pragma.plazoleta.domain.port.output.OwnerValidatorPort;
-import com.pragma.plazoleta.domain.port.output.RestaurantRepository;
+import com.pragma.plazoleta.domain.port.output.RestaurantRepositoryPort;
 import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
-public class CreateRestaurantService implements CreateRestaurantUseCase {
+public class CreateRestaurantUseCaseImpl implements CreateRestaurantUseCase {
 
-    private final RestaurantRepository repository;
+    private final RestaurantRepositoryPort repository;
     private final OwnerValidatorPort validator;
 
     @Override
