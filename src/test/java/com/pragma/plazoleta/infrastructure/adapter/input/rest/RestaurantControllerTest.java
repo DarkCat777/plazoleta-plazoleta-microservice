@@ -5,7 +5,7 @@ import com.pragma.plazoleta.application.dto.CreateRestaurantCommand;
 import com.pragma.plazoleta.application.dto.PaginatedResult;
 import com.pragma.plazoleta.application.dto.PaginationQuery;
 import com.pragma.plazoleta.application.exception.InvalidOwnerException;
-import com.pragma.plazoleta.application.port.input.FindPaginatedRestaurantUseCase;
+import com.pragma.plazoleta.application.port.input.GetPagedRestaurantUseCase;
 import com.pragma.plazoleta.config.TestSecurityConfig;
 import com.pragma.plazoleta.domain.model.Restaurant;
 import com.pragma.plazoleta.application.port.input.CreateRestaurantUseCase;
@@ -47,7 +47,7 @@ class RestaurantControllerTest {
     private CreateRestaurantUseCase createRestaurantUseCase;
 
     @MockitoBean
-    private FindPaginatedRestaurantUseCase findPaginatedRestaurantUseCase;
+    private GetPagedRestaurantUseCase getPagedRestaurantUseCase;
 
     @MockitoBean
     private RestaurantResponseMapper restaurantMapper;
@@ -125,7 +125,7 @@ class RestaurantControllerTest {
 
         PaginatedResult<Restaurant> domainResult = new PaginatedResult<>(List.of(r1, r2), page, size, 2L, 1);
 
-        when(findPaginatedRestaurantUseCase.findAllPaginated(PaginationQuery.of(page, size))).thenReturn(domainResult);
+        when(getPagedRestaurantUseCase.findAllPaginated(PaginationQuery.of(page, size))).thenReturn(domainResult);
         when(restaurantMapper.toItemPageResponse(r1)).thenReturn(res1);
         when(restaurantMapper.toItemPageResponse(r2)).thenReturn(res2);
 

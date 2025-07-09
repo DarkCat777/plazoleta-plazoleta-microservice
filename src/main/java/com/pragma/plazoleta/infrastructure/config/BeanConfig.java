@@ -17,10 +17,10 @@ public class BeanConfig {
     }
 
     @Bean
-    public FindPaginatedRestaurantUseCase findPaginatedRestaurantUseCase(
+    public GetPagedRestaurantUseCase findPaginatedRestaurantUseCase(
             RestaurantRepositoryPort restaurantRepository
     ) {
-        return new FindPaginatedRestaurantUseCaseImpl(restaurantRepository);
+        return new GetPagedRestaurantUseCaseImpl(restaurantRepository);
     }
 
     @Bean
@@ -29,14 +29,14 @@ public class BeanConfig {
             CategoryRepositoryPort categoryRepository,
             RestaurantRepositoryPort restaurantRepository,
             OwnerValidatorPort ownerValidatorPort,
-            UserPort userPort
+            AuthenticationProviderPort authenticationProviderPort
     ) {
         return new CreateDishUseCaseImpl(
                 dishRepository,
                 categoryRepository,
                 restaurantRepository,
                 ownerValidatorPort,
-                userPort
+                authenticationProviderPort
         );
     }
 
@@ -44,17 +44,17 @@ public class BeanConfig {
     public UpdateDishUseCase updateDishUseCase(
             DishRepositoryPort dishRepository,
             OwnerValidatorPort ownerValidatorPort,
-            UserPort userPort
+            AuthenticationProviderPort authenticationProviderPort
     ) {
-        return new UpdateDishUseCaseImpl(dishRepository, ownerValidatorPort, userPort);
+        return new UpdateDishUseCaseImpl(dishRepository, ownerValidatorPort, authenticationProviderPort);
     }
 
     @Bean
-    public UpdateActiveOrInactiveDishUseCase updateActiveOrInactiveDishUseCase(
+    public UpdateStatusDishUseCase updateActiveOrInactiveDishUseCase(
             DishRepositoryPort dishRepository,
             OwnerValidatorPort ownerValidatorPort,
-            UserPort userPort
+            AuthenticationProviderPort authenticationProviderPort
     ) {
-        return new UpdateActiveOrInactiveDishUseCaseImpl(dishRepository, ownerValidatorPort, userPort);
+        return new UpdateStatusDishUseCaseImpl(dishRepository, ownerValidatorPort, authenticationProviderPort);
     }
 }

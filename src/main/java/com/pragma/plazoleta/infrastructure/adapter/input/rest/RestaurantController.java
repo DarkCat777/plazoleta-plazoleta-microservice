@@ -5,7 +5,7 @@ import com.pragma.plazoleta.application.dto.PaginatedResult;
 import com.pragma.plazoleta.application.dto.PaginationQuery;
 import com.pragma.plazoleta.domain.model.Restaurant;
 import com.pragma.plazoleta.application.port.input.CreateRestaurantUseCase;
-import com.pragma.plazoleta.application.port.input.FindPaginatedRestaurantUseCase;
+import com.pragma.plazoleta.application.port.input.GetPagedRestaurantUseCase;
 import com.pragma.plazoleta.infrastructure.adapter.input.rest.response.ErrorResponse;
 import com.pragma.plazoleta.infrastructure.adapter.input.rest.response.RestaurantItemPageResponse;
 import com.pragma.plazoleta.infrastructure.adapter.input.rest.response.RestaurantResponse;
@@ -30,7 +30,7 @@ import org.springframework.web.bind.annotation.*;
 public class RestaurantController {
 
     private final CreateRestaurantUseCase createRestaurantUseCase;
-    private final FindPaginatedRestaurantUseCase findPaginatedRestaurantUseCase;
+    private final GetPagedRestaurantUseCase getPagedRestaurantUseCase;
     private final RestaurantResponseMapper restaurantMapper;
 
     @Operation(
@@ -75,7 +75,7 @@ public class RestaurantController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size
     ) {
-        PaginatedResult<Restaurant> restaurantPage = findPaginatedRestaurantUseCase.findAllPaginated(PaginationQuery.of(page, size));
+        PaginatedResult<Restaurant> restaurantPage = getPagedRestaurantUseCase.findAllPaginated(PaginationQuery.of(page, size));
         return ResponseEntity.status(HttpStatus.CREATED).body(restaurantPage.map(restaurantMapper::toItemPageResponse));
     }
 

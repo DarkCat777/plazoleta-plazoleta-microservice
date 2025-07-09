@@ -7,7 +7,7 @@ import com.pragma.plazoleta.domain.model.Dish;
 import com.pragma.plazoleta.application.port.input.UpdateDishUseCase;
 import com.pragma.plazoleta.domain.port.output.DishRepositoryPort;
 import com.pragma.plazoleta.domain.port.output.OwnerValidatorPort;
-import com.pragma.plazoleta.domain.port.output.UserPort;
+import com.pragma.plazoleta.domain.port.output.AuthenticationProviderPort;
 import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
@@ -15,14 +15,14 @@ public class UpdateDishUseCaseImpl implements UpdateDishUseCase {
 
     private final DishRepositoryPort dishRepositoryPort;
     private final OwnerValidatorPort ownerValidatorPort;
-    private final UserPort userPort;
+    private final AuthenticationProviderPort authenticationProviderPort;
 
     @Override
     public Dish updateDish(Long dishId, UpdateDishCommand command) {
         Dish dish = dishRepositoryPort.findById(dishId)
                 .orElseThrow(() -> new DishNotFoundException(dishId));
 
-        Long ownerId = userPort.getAuthenticatedUserId();
+        Long ownerId = authenticationProviderPort.getAuthenticatedUserId();
 
         if (!ownerValidatorPort.isOwnerOfRestaurant(ownerId, dish.getRestaurant().getId())) {
             throw new InvalidOwnerException("No tiene permiso para actualizar este plato.");

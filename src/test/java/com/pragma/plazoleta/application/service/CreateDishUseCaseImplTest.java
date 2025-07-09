@@ -37,7 +37,7 @@ class CreateDishUseCaseImplTest {
     private OwnerValidatorPort validator;
 
     @Mock
-    private UserPort userPort;
+    private AuthenticationProviderPort authenticationProviderPort;
 
     @InjectMocks
     private CreateDishUseCaseImpl createDishUseCaseImpl;
@@ -59,7 +59,7 @@ class CreateDishUseCaseImplTest {
     void shouldCreateDishSuccessfully() {
         Long ownerId = 100L;
 
-        when(userPort.getAuthenticatedUserId()).thenReturn(ownerId);
+        when(authenticationProviderPort.getAuthenticatedUserId()).thenReturn(ownerId);
         when(validator.isOwnerOfRestaurant(ownerId, command.getRestaurantId())).thenReturn(true);
         when(categoryRepositoryPort.findById(command.getCategoryId()))
                 .thenReturn(Optional.of(new Category(command.getCategoryId(), "Mariscos", "Comida del mar")));
@@ -87,7 +87,7 @@ class CreateDishUseCaseImplTest {
 
     @Test
     void shouldThrowExceptionIfUserIsNotOwnerOfRestaurant() {
-        when(userPort.getAuthenticatedUserId()).thenReturn(99L);
+        when(authenticationProviderPort.getAuthenticatedUserId()).thenReturn(99L);
         when(validator.isOwnerOfRestaurant(99L, command.getRestaurantId())).thenReturn(false);
 
         assertThatThrownBy(() -> createDishUseCaseImpl.createDish(command))
@@ -97,7 +97,7 @@ class CreateDishUseCaseImplTest {
 
     @Test
     void shouldThrowExceptionIfCategoryNotFound() {
-        when(userPort.getAuthenticatedUserId()).thenReturn(1L);
+        when(authenticationProviderPort.getAuthenticatedUserId()).thenReturn(1L);
         when(validator.isOwnerOfRestaurant(1L, command.getRestaurantId())).thenReturn(true);
         when(categoryRepositoryPort.findById(command.getCategoryId())).thenReturn(Optional.empty());
 
@@ -107,7 +107,7 @@ class CreateDishUseCaseImplTest {
 
     @Test
     void shouldThrowExceptionIfRestaurantNotFound() {
-        when(userPort.getAuthenticatedUserId()).thenReturn(1L);
+        when(authenticationProviderPort.getAuthenticatedUserId()).thenReturn(1L);
         when(validator.isOwnerOfRestaurant(1L, command.getRestaurantId())).thenReturn(true);
         when(categoryRepositoryPort.findById(command.getCategoryId()))
                 .thenReturn(Optional.of(new Category(1L, "Cat", "Desc")));

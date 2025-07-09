@@ -1,9 +1,9 @@
 package com.pragma.plazoleta.infrastructure.adapter.input.rest;
 
 import com.pragma.plazoleta.application.dto.CreateDishCommand;
-import com.pragma.plazoleta.application.dto.UpdateActiveOrInactiveCommand;
+import com.pragma.plazoleta.application.dto.UpdateStatusDishCommand;
 import com.pragma.plazoleta.application.dto.UpdateDishCommand;
-import com.pragma.plazoleta.application.port.input.UpdateActiveOrInactiveDishUseCase;
+import com.pragma.plazoleta.application.port.input.UpdateStatusDishUseCase;
 import com.pragma.plazoleta.domain.model.Dish;
 import com.pragma.plazoleta.application.port.input.CreateDishUseCase;
 import com.pragma.plazoleta.application.port.input.UpdateDishUseCase;
@@ -30,7 +30,7 @@ public class DishController {
 
     private final CreateDishUseCase createDishUseCase;
     private final UpdateDishUseCase updateDishUseCase;
-    private final UpdateActiveOrInactiveDishUseCase updateActiveOrInactiveDishUseCase;
+    private final UpdateStatusDishUseCase updateStatusDishUseCase;
     private final DishResponseMapper dishMapper;
 
 
@@ -98,9 +98,9 @@ public class DishController {
     @PatchMapping("/{dishId}/status")
     public ResponseEntity<DishResponse> updateDishStatus(
             @PathVariable Long dishId,
-            @Validated @RequestBody UpdateActiveOrInactiveCommand command
+            @Validated @RequestBody UpdateStatusDishCommand command
     ) {
-        Dish updatedDish = updateActiveOrInactiveDishUseCase.updateDishActiveOrInactive(dishId, command);
+        Dish updatedDish = updateStatusDishUseCase.updateDishStatus(dishId, command);
         return ResponseEntity.ok(dishMapper.toResponse(updatedDish));
     }
 }

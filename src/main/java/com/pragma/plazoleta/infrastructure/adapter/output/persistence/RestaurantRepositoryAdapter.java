@@ -34,7 +34,7 @@ public class RestaurantRepositoryAdapter implements RestaurantRepositoryPort {
     }
 
     @Override
-    public PaginatedResult<Restaurant> findAllPaginated(PaginationQuery query) {
+    public PaginatedResult<Restaurant> findAllPaged(PaginationQuery query) {
         Pageable pageable = PageRequest.of(query.getPage(), query.getSize());
         Page<JpaRestaurantEntity> page = repository.findAll(pageable);
         List<Restaurant> restaurants = page.getContent()

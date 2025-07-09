@@ -6,7 +6,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 
 @FeignClient(name = "users-microservice", url = "${users.client.url}")
-public interface UserClient {
+public interface UserFeignClient {
 
     @GetMapping("/users/{id}")
     UserResponse getUserById(@PathVariable Long id);

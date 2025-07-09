@@ -2,13 +2,13 @@ package com.pragma.plazoleta.infrastructure.adapter.input.rest;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.pragma.plazoleta.application.dto.CreateDishCommand;
-import com.pragma.plazoleta.application.dto.UpdateActiveOrInactiveCommand;
+import com.pragma.plazoleta.application.dto.UpdateStatusDishCommand;
 import com.pragma.plazoleta.application.dto.UpdateDishCommand;
 import com.pragma.plazoleta.application.exception.CategoryNotFoundException;
 import com.pragma.plazoleta.application.exception.DishNotFoundException;
 import com.pragma.plazoleta.application.exception.InvalidOwnerException;
 import com.pragma.plazoleta.application.exception.RestaurantNotFoundException;
-import com.pragma.plazoleta.application.port.input.UpdateActiveOrInactiveDishUseCase;
+import com.pragma.plazoleta.application.port.input.UpdateStatusDishUseCase;
 import com.pragma.plazoleta.config.TestSecurityConfig;
 import com.pragma.plazoleta.domain.model.Dish;
 import com.pragma.plazoleta.application.port.input.CreateDishUseCase;
@@ -52,7 +52,7 @@ class DishControllerTest {
     private UpdateDishUseCase updateDishUseCase;
 
     @MockitoBean
-    private UpdateActiveOrInactiveDishUseCase updateActiveOrInactiveDishUseCase;
+    private UpdateStatusDishUseCase updateStatusDishUseCase;
 
     @MockitoBean
     private DishResponseMapper dishMapper;
@@ -191,7 +191,7 @@ class DishControllerTest {
     @WithMockUser(roles = "OWNER")
     void shouldUpdateDishStatusSuccessfully() throws Exception {
         Long dishId = 5L;
-        UpdateActiveOrInactiveCommand command = new UpdateActiveOrInactiveCommand();
+        UpdateStatusDishCommand command = new UpdateStatusDishCommand();
         command.setActive(false);
 
         Dish updatedDish = Dish.builder()
@@ -207,7 +207,7 @@ class DishControllerTest {
                 dishId, "Sopa de verduras", 10000, "Sopa casera", "https://img.com/sopa.jpg", false, 1L, new CategoryResponse()
         );
 
-        when(updateActiveOrInactiveDishUseCase.updateDishActiveOrInactive(eq(dishId), any()))
+        when(updateStatusDishUseCase.updateDishStatus(eq(dishId), any()))
                 .thenReturn(updatedDish);
         when(dishMapper.toResponse(updatedDish)).thenReturn(response);
 
@@ -225,10 +225,10 @@ class DishControllerTest {
     @WithMockUser(roles = "OWNER")
     void shouldReturn404WhenUpdatingNonExistentDishStatus() throws Exception {
         Long dishId = 999L;
-        UpdateActiveOrInactiveCommand command = new UpdateActiveOrInactiveCommand();
+        UpdateStatusDishCommand command = new UpdateStatusDishCommand();
         command.setActive(true);
 
-        when(updateActiveOrInactiveDishUseCase.updateDishActiveOrInactive(eq(dishId), any()))
+        when(updateStatusDishUseCase.updateDishStatus(eq(dishId), any()))
                 .thenThrow(new DishNotFoundException(dishId));
 
         mockMvc.perform(

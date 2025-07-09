@@ -1,6 +1,6 @@
 package com.pragma.plazoleta.domain.port.output;
 
-public interface UserPort {
+public interface AuthenticationProviderPort {
 
     Long getAuthenticatedUserId();
 

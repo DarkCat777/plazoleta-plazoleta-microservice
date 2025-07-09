@@ -1,13 +1,13 @@
 package com.pragma.plazoleta.infrastructure.adapter.output.security;
 
 import com.auth0.jwt.interfaces.DecodedJWT;
-import com.pragma.plazoleta.domain.port.output.UserPort;
+import com.pragma.plazoleta.domain.port.output.AuthenticationProviderPort;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 
 @Component
-public class AuthenticatedUserProvider implements UserPort {
+public class AuthenticationProviderAdapter implements AuthenticationProviderPort {
     public Long getAuthenticatedUserId() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 

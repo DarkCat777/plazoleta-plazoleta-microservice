@@ -18,11 +18,11 @@ public class CreateDishUseCaseImpl implements CreateDishUseCase {
     private final CategoryRepositoryPort categoryRepositoryPort;
     private final RestaurantRepositoryPort restaurantRepositoryPort;
     private final OwnerValidatorPort validator;
-    private final UserPort userPort;
+    private final AuthenticationProviderPort authenticationProviderPort;
 
     @Override
     public Dish createDish(CreateDishCommand command) {
-        if (!validator.isOwnerOfRestaurant(userPort.getAuthenticatedUserId(), command.getRestaurantId())) {
+        if (!validator.isOwnerOfRestaurant(authenticationProviderPort.getAuthenticatedUserId(), command.getRestaurantId())) {
             throw new InvalidOwnerException("Solo el propietario del restaurante puede crear platos.");
         }
 
