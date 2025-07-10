@@ -1,4 +1,4 @@
-package com.pragma.plazoleta.application.dto;
+package com.pragma.plazoleta.application.dto.common;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -10,7 +10,7 @@ import java.util.function.Function;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class PaginatedResult<T> {
+public class PaginationResult<T> {
 
     private List<T> content;
 
@@ -22,8 +22,8 @@ public class PaginatedResult<T> {
 
     private Integer totalPages;
 
-    public <R> PaginatedResult<R> map(Function<T, R> mapper) {
+    public <R> PaginationResult<R> map(Function<T, R> mapper) {
         List<R> newContent = content.stream().map(mapper).toList();
-        return new PaginatedResult<>(newContent, page, size, totalElements, totalPages);
+        return new PaginationResult<>(newContent, page, size, totalElements, totalPages);
     }
 }

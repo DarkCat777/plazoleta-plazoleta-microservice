@@ -11,12 +11,12 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class CreateRestaurantUseCaseImpl implements CreateRestaurantUseCase {
 
-    private final RestaurantRepositoryPort repository;
-    private final OwnerValidatorPort validator;
+    private final RestaurantRepositoryPort restaurantRepositoryPort;
+    private final OwnerValidatorPort ownerValidatorPort;
 
     @Override
     public Restaurant createRestaurant(CreateRestaurantCommand command) {
-        if (!validator.isOwner(command.getOwnerId())) {
+        if (!ownerValidatorPort.isOwner(command.getOwnerId())) {
             throw new InvalidOwnerException("El usuario no tiene el rol OWNER");
         }
         Restaurant restaurant = Restaurant.builder()
@@ -27,7 +27,7 @@ public class CreateRestaurantUseCaseImpl implements CreateRestaurantUseCase {
                 .nit(command.getNit())
                 .ownerId(command.getOwnerId())
                 .build();
-        return repository.save(restaurant);
+        return restaurantRepositoryPort.save(restaurant);
     }
 }
 

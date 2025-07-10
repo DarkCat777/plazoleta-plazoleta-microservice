@@ -2,8 +2,8 @@ package com.pragma.plazoleta.infrastructure.adapter.input.rest;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.pragma.plazoleta.application.dto.CreateRestaurantCommand;
-import com.pragma.plazoleta.application.dto.PaginatedResult;
-import com.pragma.plazoleta.application.dto.PaginationQuery;
+import com.pragma.plazoleta.application.dto.common.PaginationResult;
+import com.pragma.plazoleta.application.dto.common.PaginationQuery;
 import com.pragma.plazoleta.application.exception.InvalidOwnerException;
 import com.pragma.plazoleta.application.port.input.GetPagedRestaurantUseCase;
 import com.pragma.plazoleta.config.TestSecurityConfig;
@@ -13,6 +13,7 @@ import com.pragma.plazoleta.infrastructure.adapter.input.rest.response.Restauran
 import com.pragma.plazoleta.infrastructure.adapter.input.rest.response.RestaurantResponse;
 import com.pragma.plazoleta.infrastructure.adapter.input.rest.handler.GlobalExceptionHandler;
 import com.pragma.plazoleta.infrastructure.adapter.input.security.JwtAuthenticationRequestFilter;
+import com.pragma.plazoleta.infrastructure.adapter.mapper.PaginationQueryMapper;
 import com.pragma.plazoleta.infrastructure.adapter.mapper.RestaurantResponseMapper;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,6 +21,7 @@ import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.FilterType;
 import org.springframework.context.annotation.Import;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
@@ -51,6 +53,9 @@ class RestaurantControllerTest {
 
     @MockitoBean
     private RestaurantResponseMapper restaurantMapper;
+
+    @MockitoBean
+    private PaginationQueryMapper paginationQueryMapper;
 
     @Autowired
     private ObjectMapper objectMapper;
@@ -123,9 +128,15 @@ class RestaurantControllerTest {
         RestaurantItemPageResponse res1 = new RestaurantItemPageResponse(1L, "Resto 1", "img1");
         RestaurantItemPageResponse res2 = new RestaurantItemPageResponse(2L, "Resto 2", "img2");
 
-        PaginatedResult<Restaurant> domainResult = new PaginatedResult<>(List.of(r1, r2), page, size, 2L, 1);
+        PaginationResult<Restaurant> domainResult = new PaginationResult<>(
+                List.of(r1, r2), page, size, 2L, 1
+        );
 
-        when(getPagedRestaurantUseCase.findAllPaginated(PaginationQuery.of(page, size))).thenReturn(domainResult);
+        PaginationQuery paginationQuery = PaginationQuery.of(page, size);
+
+        when(paginationQueryMapper.toPaginationQuery(any(Pageable.class))).thenReturn(paginationQuery);
+        when(getPagedRestaurantUseCase.findAllPaginated(any(PaginationQuery.class)))
+                .thenReturn(domainResult);
         when(restaurantMapper.toItemPageResponse(r1)).thenReturn(res1);
         when(restaurantMapper.toItemPageResponse(r2)).thenReturn(res2);
 
@@ -133,9 +144,16 @@ class RestaurantControllerTest {
                         .param("page", String.valueOf(page))
                         .param("size", String.valueOf(size))
                         .accept(MediaType.APPLICATION_JSON))
-                .andExpect(status().isCreated())
+                .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content.length()").value(2))
-                .andExpect(jsonPath("$.content[0].id").value(1L))
-                .andExpect(jsonPath("$.content[1].name").value("Resto 2"));
+                .andExpect(jsonPath("$.content[0].id").value(1))
+                .andExpect(jsonPath("$.content[0].name").value("Resto 1"))
+                .andExpect(jsonPath("$.content[1].id").value(2))
+                .andExpect(jsonPath("$.content[1].name").value("Resto 2"))
+                .andExpect(jsonPath("$.page").value(page))
+                .andExpect(jsonPath("$.size").value(size))
+                .andExpect(jsonPath("$.totalElements").value(2))
+                .andExpect(jsonPath("$.totalPages").value(1));
     }
+
 }

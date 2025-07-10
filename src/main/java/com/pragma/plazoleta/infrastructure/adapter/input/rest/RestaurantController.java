@@ -1,14 +1,15 @@
 package com.pragma.plazoleta.infrastructure.adapter.input.rest;
 
 import com.pragma.plazoleta.application.dto.CreateRestaurantCommand;
-import com.pragma.plazoleta.application.dto.PaginatedResult;
-import com.pragma.plazoleta.application.dto.PaginationQuery;
+import com.pragma.plazoleta.application.dto.common.PaginationResult;
+import com.pragma.plazoleta.application.dto.common.PaginationQuery;
 import com.pragma.plazoleta.domain.model.Restaurant;
 import com.pragma.plazoleta.application.port.input.CreateRestaurantUseCase;
 import com.pragma.plazoleta.application.port.input.GetPagedRestaurantUseCase;
 import com.pragma.plazoleta.infrastructure.adapter.input.rest.response.ErrorResponse;
 import com.pragma.plazoleta.infrastructure.adapter.input.rest.response.RestaurantItemPageResponse;
 import com.pragma.plazoleta.infrastructure.adapter.input.rest.response.RestaurantResponse;
+import com.pragma.plazoleta.infrastructure.adapter.mapper.PaginationQueryMapper;
 import com.pragma.plazoleta.infrastructure.adapter.mapper.RestaurantResponseMapper;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -18,6 +19,8 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -32,6 +35,7 @@ public class RestaurantController {
     private final CreateRestaurantUseCase createRestaurantUseCase;
     private final GetPagedRestaurantUseCase getPagedRestaurantUseCase;
     private final RestaurantResponseMapper restaurantMapper;
+    private final PaginationQueryMapper paginationQueryMapper;
 
     @Operation(
             summary = "Crear restaurante",
@@ -54,29 +58,35 @@ public class RestaurantController {
 
     @Operation(
             summary = "Obtener restaurantes paginados",
-            description = "Permite a un usuario con rol CUSTOMER obtener una lista paginada de restaurantes registrados en el sistema.",
-            security = @SecurityRequirement(name = "Bearer Auth"),
-            parameters = {
-                    @Parameter(name = "page", description = "Número de página a recuperar (empezando desde 0)", example = "0"),
-                    @Parameter(name = "size", description = "Cantidad de elementos por página", example = "10")
-            }
+            description = "Permite a un usuario con rol CUSTOMER obtener una lista paginada de restaurantes registrados en el sistema. Se puede aplicar paginación y ordenamiento.",
+            security = @SecurityRequirement(name = "Bearer Auth")
     )
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "201", description = "Lista de restaurantes obtenida exitosamente",
-                    content = @Content(mediaType = "application/json")),
-            @ApiResponse(responseCode = "403", description = "Acceso denegado. El usuario no tiene el rol requerido",
-                    content = @Content),
-            @ApiResponse(responseCode = "500", description = "Error interno del servidor",
-                    content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Lista de restaurantes obtenida exitosamente",
+                    content = @Content(mediaType = "application/json")
+            ),
+            @ApiResponse(
+                    responseCode = "403",
+                    description = "Acceso denegado. El usuario no tiene el rol requerido",
+                    content = @Content
+            ),
+            @ApiResponse(
+                    responseCode = "500",
+                    description = "Error interno del servidor",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))
+            )
     })
     @PreAuthorize("hasRole('CUSTOMER')")
     @GetMapping
-    public ResponseEntity<PaginatedResult<RestaurantItemPageResponse>> getPaginatedRestaurants(
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size
+    public ResponseEntity<PaginationResult<RestaurantItemPageResponse>> getPaginatedRestaurants(
+            @Parameter(description = "Parámetros de paginación y ordenamiento: page, size, sort", hidden = true)
+            @PageableDefault Pageable pageable
     ) {
-        PaginatedResult<Restaurant> restaurantPage = getPagedRestaurantUseCase.findAllPaginated(PaginationQuery.of(page, size));
-        return ResponseEntity.status(HttpStatus.CREATED).body(restaurantPage.map(restaurantMapper::toItemPageResponse));
+        PaginationQuery paginationQuery = paginationQueryMapper.toPaginationQuery(pageable);
+        PaginationResult<Restaurant> restaurantPage = getPagedRestaurantUseCase.findAllPaginated(paginationQuery);
+        return ResponseEntity.ok(restaurantPage.map(restaurantMapper::toItemPageResponse));
     }
 
 }

@@ -12,14 +12,14 @@ import lombok.RequiredArgsConstructor;
 public class UpdateStatusDishUseCaseImpl implements UpdateStatusDishUseCase {
 
     private final DishRepositoryPort dishRepositoryPort;
-    private final OwnerValidatorPort validator;
+    private final OwnerValidatorPort ownerValidatorPort;
     private final AuthenticationProviderPort authenticationProviderPort;
 
     @Override
     public Dish updateDishStatus(Long dishId, UpdateStatusDishCommand command) {
         Dish dish = dishRepositoryPort.findById(dishId)
                 .orElseThrow(() -> new DishNotFoundException(dishId));
-        if (!validator.isOwnerOfRestaurant(authenticationProviderPort.getAuthenticatedUserId(), dish.getRestaurant().getId())) {
+        if (!ownerValidatorPort.isOwnerOfRestaurant(authenticationProviderPort.getAuthenticatedUserId(), dish.getRestaurant().getId())) {
             throw new InvalidOwnerException("Solo el propietario del restaurante puede actualizar el estado de los platos.");
         }
         dish.setActive(command.getActive());

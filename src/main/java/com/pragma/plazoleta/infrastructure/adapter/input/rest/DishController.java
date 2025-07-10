@@ -1,8 +1,9 @@
 package com.pragma.plazoleta.infrastructure.adapter.input.rest;
 
-import com.pragma.plazoleta.application.dto.CreateDishCommand;
-import com.pragma.plazoleta.application.dto.UpdateStatusDishCommand;
-import com.pragma.plazoleta.application.dto.UpdateDishCommand;
+import com.pragma.plazoleta.application.dto.common.PaginationResult;
+import com.pragma.plazoleta.application.dto.common.PaginationQuery;
+import com.pragma.plazoleta.application.dto.*;
+import com.pragma.plazoleta.application.port.input.GetPagedDishByRestaurantAndCategoryUseCase;
 import com.pragma.plazoleta.application.port.input.UpdateStatusDishUseCase;
 import com.pragma.plazoleta.domain.model.Dish;
 import com.pragma.plazoleta.application.port.input.CreateDishUseCase;
@@ -10,18 +11,24 @@ import com.pragma.plazoleta.application.port.input.UpdateDishUseCase;
 import com.pragma.plazoleta.infrastructure.adapter.input.rest.response.DishResponse;
 import com.pragma.plazoleta.infrastructure.adapter.input.rest.response.ErrorResponse;
 import com.pragma.plazoleta.infrastructure.adapter.mapper.DishResponseMapper;
+import com.pragma.plazoleta.infrastructure.adapter.mapper.PaginationQueryMapper;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
+import org.springframework.data.web.SortDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+
 
 @RestController
 @RequestMapping("/api/v1/dishes")
@@ -31,8 +38,9 @@ public class DishController {
     private final CreateDishUseCase createDishUseCase;
     private final UpdateDishUseCase updateDishUseCase;
     private final UpdateStatusDishUseCase updateStatusDishUseCase;
+    private final GetPagedDishByRestaurantAndCategoryUseCase getPagedDishByRestaurantAndCategoryUseCase;
     private final DishResponseMapper dishMapper;
-
+    private final PaginationQueryMapper paginationQueryMapper;
 
     @Operation(
             summary = "Crear plato",
@@ -95,12 +103,57 @@ public class DishController {
             @ApiResponse(responseCode = "500", description = "Error interno del servidor", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
     @PreAuthorize("hasRole('OWNER')")
-    @PatchMapping("/{dishId}/status")
+    @PutMapping("/{dishId}/status")
     public ResponseEntity<DishResponse> updateDishStatus(
             @PathVariable Long dishId,
             @Validated @RequestBody UpdateStatusDishCommand command
     ) {
         Dish updatedDish = updateStatusDishUseCase.updateDishStatus(dishId, command);
         return ResponseEntity.ok(dishMapper.toResponse(updatedDish));
+    }
+
+    @Operation(
+            summary = "Obtener platos paginados por restaurante y categoría",
+            description = "Permite a los clientes obtener un listado paginado de platos de un restaurante filtrado por categoría. Se puede aplicar paginación y ordenamiento.",
+            security = @SecurityRequirement(name = "Bearer Auth")
+    )
+    @ApiResponses(value = {
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Listado paginado de platos obtenido exitosamente"
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "Parámetros inválidos o usuario no autorizado",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))
+            ),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "Restaurante o categoría no encontrados",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))
+            ),
+            @ApiResponse(
+                    responseCode = "500",
+                    description = "Error interno del servidor",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))
+            )
+    })
+    @PreAuthorize("hasRole('CUSTOMER')")
+    @GetMapping("/restaurant/{restaurantId}/category/{categoryId}")
+    public ResponseEntity<PaginationResult<DishResponse>> getPagedDishByRestaurantIdAndCategory(
+            @Parameter(description = "ID del restaurante", required = true, example = "1")
+            @PathVariable Long restaurantId,
+            @Parameter(description = "ID de la categoría de platos", required = true, example = "2")
+            @PathVariable Long categoryId,
+            @Parameter(description = "Parámetros de paginación y ordenamiento: page, size, sort", hidden = true)
+            @SortDefault(sort = "name")
+            @PageableDefault Pageable pageable
+    ) {
+        PaginationQuery paginationQuery = paginationQueryMapper.toPaginationQuery(pageable);
+        PaginationResult<Dish> pagedDishes =
+                getPagedDishByRestaurantAndCategoryUseCase.getPagedDishByRestaurantIdAndCategoryId(
+                        restaurantId, categoryId, paginationQuery
+                );
+        return ResponseEntity.ok(pagedDishes.map(dishMapper::toResponse));
     }
 }

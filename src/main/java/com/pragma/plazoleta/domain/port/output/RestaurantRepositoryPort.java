@@ -1,7 +1,7 @@
 package com.pragma.plazoleta.domain.port.output;
 
-import com.pragma.plazoleta.application.dto.PaginatedResult;
-import com.pragma.plazoleta.application.dto.PaginationQuery;
+import com.pragma.plazoleta.application.dto.common.PaginationResult;
+import com.pragma.plazoleta.application.dto.common.PaginationQuery;
 import com.pragma.plazoleta.domain.model.Restaurant;
 
 import java.util.Optional;
@@ -11,5 +11,5 @@ public interface RestaurantRepositoryPort {
 
     Optional<Restaurant> findById(Long restaurantId);
 
-    PaginatedResult<Restaurant> findAllPaged(PaginationQuery pageable);
+    PaginationResult<Restaurant> findAllPaged(PaginationQuery pageable);
 }

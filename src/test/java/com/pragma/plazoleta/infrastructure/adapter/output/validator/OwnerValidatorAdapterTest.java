@@ -1,8 +1,9 @@
 package com.pragma.plazoleta.infrastructure.adapter.output.validator;
 
-import com.pragma.plazoleta.infrastructure.adapter.output.client.UserFeignClient;
-import com.pragma.plazoleta.infrastructure.adapter.output.client.dto.RoleResponse;
-import com.pragma.plazoleta.infrastructure.adapter.output.client.dto.UserResponse;
+import com.pragma.plazoleta.domain.model.Role;
+import com.pragma.plazoleta.domain.model.RoleName;
+import com.pragma.plazoleta.domain.model.User;
+import com.pragma.plazoleta.domain.port.output.UserClientPort;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -20,7 +21,7 @@ import static org.mockito.Mockito.when;
 class OwnerValidatorAdapterTest {
 
     @Mock
-    private UserFeignClient userFeignClient;
+    private UserClientPort userClientPort;
 
     @InjectMocks
     private OwnerValidatorAdapter ownerValidatorAdapter;
@@ -29,33 +30,33 @@ class OwnerValidatorAdapterTest {
     void shouldReturnTrueWhenUserIsOwner() {
         // given
         Long userId = 1L;
-        RoleResponse roleResponse = new RoleResponse(3L, "OWNER", "owner role");
-        UserResponse userResponse = new UserResponse(userId, "Ana", "Torres", "ana@correo.com", "987654321", "23232332", LocalDate.now(), roleResponse);
+        Role roleResponse = new Role(3L, RoleName.OWNER, "owner role");
+        User userResponse = new User(userId, "Ana", "Torres", "987654321", "23232332", LocalDate.now(), "ana@correo.com", null, roleResponse);
 
-        when(userFeignClient.getUserById(userId)).thenReturn(userResponse);
+        when(userClientPort.getUserById(userId)).thenReturn(userResponse);
 
         // when
         boolean result = ownerValidatorAdapter.isOwner(userId);
 
         // then
         assertTrue(result);
-        verify(userFeignClient).getUserById(userId);
+        verify(userClientPort).getUserById(userId);
     }
 
     @Test
     void shouldReturnFalseWhenUserIsNotOwner() {
         // given
         Long userId = 2L;
-        RoleResponse roleResponse = new RoleResponse(1L, "CLIENT", "cliente común");
-        UserResponse userResponse = new UserResponse(userId, "Luis", "Martínez", "luis@correo.com", "912345678", "23232332", LocalDate.now(), roleResponse);
+        Role roleResponse = new Role(3L, RoleName.CUSTOMER, "customer role");
+        User userResponse = new User(userId, "Ana", "Torres", "987654321", "23232332", LocalDate.now(), "ana@correo.com", null, roleResponse);
 
-        when(userFeignClient.getUserById(userId)).thenReturn(userResponse);
+        when(userClientPort.getUserById(userId)).thenReturn(userResponse);
 
         // when
         boolean result = ownerValidatorAdapter.isOwner(userId);
 
         // then
         assertFalse(result);
-        verify(userFeignClient).getUserById(userId);
+        verify(userClientPort).getUserById(userId);
     }
 }

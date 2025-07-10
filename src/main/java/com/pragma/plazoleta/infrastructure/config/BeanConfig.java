@@ -8,6 +8,7 @@ import org.springframework.context.annotation.Configuration;
 
 @Configuration
 public class BeanConfig {
+
     @Bean
     public CreateRestaurantUseCase createRestaurantUseCase(
             RestaurantRepositoryPort restaurantRepository,
@@ -56,5 +57,10 @@ public class BeanConfig {
             AuthenticationProviderPort authenticationProviderPort
     ) {
         return new UpdateStatusDishUseCaseImpl(dishRepository, ownerValidatorPort, authenticationProviderPort);
+    }
+
+    @Bean
+    public GetPagedDishByRestaurantAndCategoryUseCase getPagedDishByRestaurantAndCategoryUseCase(DishRepositoryPort dishRepository) {
+        return new GetPagedDishByRestaurantAndCategoryUseCaseImpl(dishRepository);
     }
 }
