@@ -47,7 +47,7 @@ class UpdateStatusDishUseCaseImplTest {
     }
 
     @Test
-    void shouldUpdateDishStatusSuccessfully() {
+    void shouldExecuteSuccessfully() {
         // Arrange
         UpdateStatusDishCommand command = new UpdateStatusDishCommand(true);
 
@@ -56,7 +56,7 @@ class UpdateStatusDishUseCaseImplTest {
         when(dishRepositoryPort.save(any(Dish.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         // Act
-        Dish result = updateStatusDishUseCase.updateDishStatus(ownerId, dishId, command);
+        Dish result = updateStatusDishUseCase.execute(ownerId, dishId, command);
 
         // Assert
         assertTrue(result.isActive());
@@ -71,7 +71,7 @@ class UpdateStatusDishUseCaseImplTest {
 
         // Act & Assert
         assertThrows(DishNotFoundException.class, () ->
-                updateStatusDishUseCase.updateDishStatus(ownerId, dishId, command));
+                updateStatusDishUseCase.execute(ownerId, dishId, command));
         verify(dishRepositoryPort, never()).save(any());
     }
 
@@ -85,7 +85,7 @@ class UpdateStatusDishUseCaseImplTest {
 
         // Act & Assert
         assertThrows(InvalidOwnerException.class, () ->
-                updateStatusDishUseCase.updateDishStatus(ownerId, dishId, command));
+                updateStatusDishUseCase.execute(ownerId, dishId, command));
         verify(dishRepositoryPort, never()).save(any());
     }
 }

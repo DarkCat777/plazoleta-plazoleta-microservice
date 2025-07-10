@@ -107,7 +107,7 @@ class DishControllerTest {
 
         SecurityContextHolder.getContext().setAuthentication(auth);
 
-        when(createDishUseCase.createDish(any(), any())).thenReturn(domainDish);
+        when(createDishUseCase.execute(any(), any())).thenReturn(domainDish);
         when(dishMapper.toResponse(any())).thenReturn(response);
 
         mockMvc.perform(post("/api/v1/dishes")
@@ -132,7 +132,7 @@ class DishControllerTest {
 
         SecurityContextHolder.getContext().setAuthentication(auth);
 
-        when(createDishUseCase.createDish(any(), any())).thenThrow(new InvalidOwnerException("No autorizado"));
+        when(createDishUseCase.execute(any(), any())).thenThrow(new InvalidOwnerException("No autorizado"));
 
         mockMvc.perform(post("/api/v1/dishes")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -151,7 +151,7 @@ class DishControllerTest {
 
         SecurityContextHolder.getContext().setAuthentication(auth);
 
-        when(createDishUseCase.createDish(any(), any())).thenThrow(new CategoryNotFoundException(1L));
+        when(createDishUseCase.execute(any(), any())).thenThrow(new CategoryNotFoundException(1L));
 
         mockMvc.perform(post("/api/v1/dishes")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -170,7 +170,7 @@ class DishControllerTest {
 
         SecurityContextHolder.getContext().setAuthentication(auth);
 
-        when(createDishUseCase.createDish(any(), any())).thenThrow(new RestaurantNotFoundException(1L));
+        when(createDishUseCase.execute(any(), any())).thenThrow(new RestaurantNotFoundException(1L));
 
         mockMvc.perform(post("/api/v1/dishes")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -192,7 +192,7 @@ class DishControllerTest {
 
         SecurityContextHolder.getContext().setAuthentication(auth);
 
-        when(updateDishUseCase.updateDish(any(), eq(dishId), any())).thenReturn(dish);
+        when(updateDishUseCase.execute(any(), eq(dishId), any())).thenReturn(dish);
         when(dishMapper.toResponse(dish)).thenReturn(response);
 
         mockMvc.perform(put("/api/v1/dishes/{dishId}", dishId)
@@ -215,7 +215,7 @@ class DishControllerTest {
 
         SecurityContextHolder.getContext().setAuthentication(auth);
 
-        when(updateDishUseCase.updateDish(any(), eq(dishId), any()))
+        when(updateDishUseCase.execute(any(), eq(dishId), any()))
                 .thenThrow(new DishNotFoundException(dishId));
 
         mockMvc.perform(put("/api/v1/dishes/{dishId}", dishId)
@@ -236,7 +236,7 @@ class DishControllerTest {
 
         SecurityContextHolder.getContext().setAuthentication(auth);
 
-        when(updateDishUseCase.updateDish(any(), eq(dishId), any()))
+        when(updateDishUseCase.execute(any(), eq(dishId), any()))
                 .thenThrow(new InvalidOwnerException("No autorizado"));
 
         mockMvc.perform(put("/api/v1/dishes/{dishId}", dishId)
@@ -272,7 +272,7 @@ class DishControllerTest {
 
         SecurityContextHolder.getContext().setAuthentication(auth);
 
-        when(updateStatusDishUseCase.updateDishStatus(any(), eq(dishId), any()))
+        when(updateStatusDishUseCase.execute(any(), eq(dishId), any()))
                 .thenReturn(updatedDish);
         when(dishMapper.toResponse(updatedDish)).thenReturn(response);
 
@@ -299,7 +299,7 @@ class DishControllerTest {
 
         SecurityContextHolder.getContext().setAuthentication(auth);
 
-        when(updateStatusDishUseCase.updateDishStatus(any(), eq(dishId), any()))
+        when(updateStatusDishUseCase.execute(any(), eq(dishId), any()))
                 .thenThrow(new DishNotFoundException(dishId));
 
         mockMvc.perform(
@@ -343,7 +343,7 @@ class DishControllerTest {
         when(paginationQueryMapper.toPaginationQuery(any(Pageable.class)))
                 .thenReturn(PaginationQuery.of(page, size));
         when(getPagedDishByRestaurantAndCategoryUseCase
-                .getPagedDishByRestaurantIdAndCategoryId(eq(restaurantId), eq(categoryId), any(PaginationQuery.class)))
+                .execute(eq(restaurantId), eq(categoryId), any(PaginationQuery.class)))
                 .thenReturn(domainResult);
         when(dishMapper.toResponse(dish1)).thenReturn(response1);
         when(dishMapper.toResponse(dish2)).thenReturn(response2);

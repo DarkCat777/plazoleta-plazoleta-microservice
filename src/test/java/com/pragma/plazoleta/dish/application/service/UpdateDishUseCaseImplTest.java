@@ -48,7 +48,7 @@ class UpdateDishUseCaseImplTest {
     }
 
     @Test
-    void shouldUpdateDishSuccessfully() {
+    void shouldExecuteSuccessfully() {
         // Arrange
         UpdateDishCommand command = new UpdateDishCommand(150, "Nueva descripción");
 
@@ -57,7 +57,7 @@ class UpdateDishUseCaseImplTest {
         when(dishRepositoryPort.save(any(Dish.class))).thenAnswer(inv -> inv.getArgument(0));
 
         // Act
-        Dish updatedDish = updateDishUseCase.updateDish(ownerId, dishId, command);
+        Dish updatedDish = updateDishUseCase.execute(ownerId, dishId, command);
 
         // Assert
         assertEquals(150, updatedDish.getPrice());
@@ -73,7 +73,7 @@ class UpdateDishUseCaseImplTest {
 
         // Act & Assert
         assertThrows(DishNotFoundException.class, () ->
-                updateDishUseCase.updateDish(ownerId, dishId, command));
+                updateDishUseCase.execute(ownerId, dishId, command));
         verify(dishRepositoryPort, never()).save(any());
     }
 
@@ -87,7 +87,7 @@ class UpdateDishUseCaseImplTest {
 
         // Act & Assert
         assertThrows(InvalidOwnerException.class, () ->
-                updateDishUseCase.updateDish(ownerId, dishId, command));
+                updateDishUseCase.execute(ownerId, dishId, command));
         verify(dishRepositoryPort, never()).save(any());
     }
 }

@@ -66,7 +66,7 @@ public class DishController {
             @AuthenticationPrincipal AuthenticatedUser authenticatedUser,
             @Validated @RequestBody CreateDishCommand command
     ) {
-        Dish createdDish = createDishUseCase.createDish(authenticatedUser.getId(), command);
+        Dish createdDish = createDishUseCase.execute(authenticatedUser.getId(), command);
         return ResponseEntity.status(HttpStatus.CREATED).body(dishMapper.toResponse(createdDish));
     }
 
@@ -93,7 +93,7 @@ public class DishController {
             @PathVariable Long dishId,
             @Validated @RequestBody UpdateDishCommand command
     ) {
-        Dish dish = updateDishUseCase.updateDish(authenticatedUser.getId(), dishId, command);
+        Dish dish = updateDishUseCase.execute(authenticatedUser.getId(), dishId, command);
         return ResponseEntity.ok(dishMapper.toResponse(dish));
     }
 
@@ -115,7 +115,7 @@ public class DishController {
             @PathVariable Long dishId,
             @Validated @RequestBody UpdateStatusDishCommand command
     ) {
-        Dish updatedDish = updateStatusDishUseCase.updateDishStatus(authenticatedUser.getId(), dishId, command);
+        Dish updatedDish = updateStatusDishUseCase.execute(authenticatedUser.getId(), dishId, command);
         return ResponseEntity.ok(dishMapper.toResponse(updatedDish));
     }
 
@@ -158,7 +158,7 @@ public class DishController {
     ) {
         PaginationQuery paginationQuery = paginationQueryMapper.toPaginationQuery(pageable);
         PaginationResult<Dish> pagedDishes =
-                getPagedDishByRestaurantAndCategoryUseCase.getPagedDishByRestaurantIdAndCategoryId(
+                getPagedDishByRestaurantAndCategoryUseCase.execute(
                         restaurantId, categoryId, paginationQuery
                 );
         return ResponseEntity.ok(pagedDishes.map(dishMapper::toResponse));

@@ -4,5 +4,5 @@ import com.pragma.plazoleta.dish.application.dto.UpdateDishCommand;
 import com.pragma.plazoleta.dish.domain.model.Dish;
 
 public interface UpdateDishUseCase {
-    Dish updateDish(Long authenticatedUserId, Long dishId, UpdateDishCommand command);
+    Dish execute(Long authenticatedUserId, Long dishId, UpdateDishCommand command);
 }

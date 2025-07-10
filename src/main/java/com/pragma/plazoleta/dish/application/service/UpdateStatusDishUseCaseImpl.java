@@ -16,7 +16,7 @@ public class UpdateStatusDishUseCaseImpl implements UpdateStatusDishUseCase {
     private final OwnerOfRestaurantValidatorPort ownerOfRestaurantValidatorPort;
 
     @Override
-    public Dish updateDishStatus(Long authenticatedUserId,Long dishId, UpdateStatusDishCommand command) {
+    public Dish execute(Long authenticatedUserId, Long dishId, UpdateStatusDishCommand command) {
         Dish dish = dishRepositoryPort.findById(dishId)
                 .orElseThrow(() -> new DishNotFoundException(dishId));
         if (!ownerOfRestaurantValidatorPort.isOwnerOfRestaurant(authenticatedUserId, dish.getRestaurant().getId())) {

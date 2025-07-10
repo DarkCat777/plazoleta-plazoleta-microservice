@@ -13,7 +13,7 @@ public class GetPagedDishByRestaurantAndCategoryUseCaseImpl implements GetPagedD
     private final DishRepositoryPort dishRepositoryPort;
 
     @Override
-    public PaginationResult<Dish> getPagedDishByRestaurantIdAndCategoryId(Long restaurantId, Long categoryId, PaginationQuery paginationQuery) {
+    public PaginationResult<Dish> execute(Long restaurantId, Long categoryId, PaginationQuery paginationQuery) {
         return dishRepositoryPort.findAllByRestaurantIdAndCategoryId(restaurantId, categoryId, paginationQuery);
     }
 }

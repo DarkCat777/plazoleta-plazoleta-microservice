@@ -56,7 +56,7 @@ class CreateDishUseCaseImplTest {
     }
 
     @Test
-    void shouldCreateDishSuccessfully() {
+    void shouldExecuteSuccessfully() {
         Long ownerId = 100L;
 
         when(ownerOfRestaurantValidatorPort.isOwnerOfRestaurant(ownerId, command.getRestaurantId())).thenReturn(true);
@@ -76,7 +76,7 @@ class CreateDishUseCaseImplTest {
 
         when(dishRepositoryPort.save(any(Dish.class))).thenReturn(savedDish);
 
-        Dish result = createDishUseCaseImpl.createDish(ownerId, command);
+        Dish result = createDishUseCaseImpl.execute(ownerId, command);
 
         assertThat(result).isNotNull();
         assertThat(result.getName()).isEqualTo("Ceviche");
@@ -88,7 +88,7 @@ class CreateDishUseCaseImplTest {
     void shouldThrowExceptionIfUserIsNotOwnerOfRestaurant() {
         when(ownerOfRestaurantValidatorPort.isOwnerOfRestaurant(99L, command.getRestaurantId())).thenReturn(false);
 
-        assertThatThrownBy(() -> createDishUseCaseImpl.createDish(99L, command))
+        assertThatThrownBy(() -> createDishUseCaseImpl.execute(99L, command))
                 .isInstanceOf(InvalidOwnerException.class)
                 .hasMessageContaining("Solo el propietario del restaurante puede crear platos.");
     }
@@ -98,7 +98,7 @@ class CreateDishUseCaseImplTest {
         when(ownerOfRestaurantValidatorPort.isOwnerOfRestaurant(1L, command.getRestaurantId())).thenReturn(true);
         when(categoryRepositoryPort.findById(command.getCategoryId())).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> createDishUseCaseImpl.createDish(1L, command))
+        assertThatThrownBy(() -> createDishUseCaseImpl.execute(1L, command))
                 .isInstanceOf(CategoryNotFoundException.class);
     }
 
@@ -109,7 +109,7 @@ class CreateDishUseCaseImplTest {
                 .thenReturn(Optional.of(new Category(1L, "Cat", "Desc")));
         when(restaurantRepositoryPort.findById(command.getRestaurantId())).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> createDishUseCaseImpl.createDish(1L, command))
+        assertThatThrownBy(() -> createDishUseCaseImpl.execute(1L, command))
                 .isInstanceOf(RestaurantNotFoundException.class);
     }
 }

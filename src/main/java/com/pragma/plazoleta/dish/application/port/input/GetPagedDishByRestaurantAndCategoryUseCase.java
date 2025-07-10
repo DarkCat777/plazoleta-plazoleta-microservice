@@ -5,5 +5,5 @@ import com.pragma.plazoleta.shared.dto.PaginationQuery;
 import com.pragma.plazoleta.dish.domain.model.Dish;
 
 public interface GetPagedDishByRestaurantAndCategoryUseCase {
-    PaginationResult<Dish> getPagedDishByRestaurantIdAndCategoryId(Long restaurantId, Long categoryId, PaginationQuery paginationQuery);
+    PaginationResult<Dish> execute(Long restaurantId, Long categoryId, PaginationQuery paginationQuery);
 }

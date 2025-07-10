@@ -4,5 +4,5 @@ import com.pragma.plazoleta.dish.application.dto.CreateDishCommand;
 import com.pragma.plazoleta.dish.domain.model.Dish;
 
 public interface CreateDishUseCase {
-    Dish createDish(Long authenticatedUserId, CreateDishCommand command);
+    Dish execute(Long authenticatedUserId, CreateDishCommand command);
 }
