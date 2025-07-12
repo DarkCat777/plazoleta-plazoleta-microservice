@@ -1,6 +1,6 @@
 package com.pragma.plazoleta.infrastructure.config;
 
-import com.pragma.plazoleta.infrastructure.adapter.input.security.JwtAuthenticationRequestFilter;
+import com.pragma.plazoleta.infrastructure.security.JwtAuthenticationRequestFilter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

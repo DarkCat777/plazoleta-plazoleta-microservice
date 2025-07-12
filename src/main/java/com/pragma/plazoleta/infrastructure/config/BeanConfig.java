@@ -1,8 +1,13 @@
 package com.pragma.plazoleta.infrastructure.config;
 
-import com.pragma.plazoleta.application.port.input.*;
-import com.pragma.plazoleta.application.service.*;
-import com.pragma.plazoleta.domain.port.output.*;
+import com.pragma.plazoleta.domain.spi.OwnerValidatorPort;
+import com.pragma.plazoleta.domain.spi.persistence.CategoryRepositoryPort;
+import com.pragma.plazoleta.domain.spi.persistence.DishRepositoryPort;
+import com.pragma.plazoleta.domain.spi.persistence.RestaurantRepositoryPort;
+import com.pragma.plazoleta.domain.usecase.DishUseCase;
+import com.pragma.plazoleta.domain.usecase.RestaurantUseCase;
+import com.pragma.plazoleta.domain.usecase.impl.DishUseCaseImpl;
+import com.pragma.plazoleta.domain.usecase.impl.RestaurantUseCaseImpl;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -10,57 +15,28 @@ import org.springframework.context.annotation.Configuration;
 public class BeanConfig {
 
     @Bean
-    public CreateRestaurantUseCase createRestaurantUseCase(
-            RestaurantRepositoryPort restaurantRepository,
-            OwnerValidatorPort ownerValidatorPort
-    ) {
-        return new CreateRestaurantUseCaseImpl(restaurantRepository, ownerValidatorPort);
-    }
-
-    @Bean
-    public GetPagedRestaurantUseCase findPaginatedRestaurantUseCase(
-            RestaurantRepositoryPort restaurantRepository
-    ) {
-        return new GetPagedRestaurantUseCaseImpl(restaurantRepository);
-    }
-
-    @Bean
-    public CreateDishUseCase createDishUseCase(
+    public DishUseCase createDishUseCase(
             DishRepositoryPort dishRepository,
             CategoryRepositoryPort categoryRepository,
             RestaurantRepositoryPort restaurantRepository,
-            OwnerValidatorPort ownerValidatorPort,
-            AuthenticationProviderPort authenticationProviderPort
+            OwnerValidatorPort ownerValidator
     ) {
-        return new CreateDishUseCaseImpl(
+        return new DishUseCaseImpl(
                 dishRepository,
                 categoryRepository,
                 restaurantRepository,
-                ownerValidatorPort,
-                authenticationProviderPort
+                ownerValidator
         );
     }
 
     @Bean
-    public UpdateDishUseCase updateDishUseCase(
-            DishRepositoryPort dishRepository,
-            OwnerValidatorPort ownerValidatorPort,
-            AuthenticationProviderPort authenticationProviderPort
+    public RestaurantUseCase createRestaurantUseCase(
+            RestaurantRepositoryPort restaurantRepository,
+            OwnerValidatorPort ownerValidator
     ) {
-        return new UpdateDishUseCaseImpl(dishRepository, ownerValidatorPort, authenticationProviderPort);
-    }
-
-    @Bean
-    public UpdateStatusDishUseCase updateActiveOrInactiveDishUseCase(
-            DishRepositoryPort dishRepository,
-            OwnerValidatorPort ownerValidatorPort,
-            AuthenticationProviderPort authenticationProviderPort
-    ) {
-        return new UpdateStatusDishUseCaseImpl(dishRepository, ownerValidatorPort, authenticationProviderPort);
-    }
-
-    @Bean
-    public GetPagedDishByRestaurantAndCategoryUseCase getPagedDishByRestaurantAndCategoryUseCase(DishRepositoryPort dishRepository) {
-        return new GetPagedDishByRestaurantAndCategoryUseCaseImpl(dishRepository);
+        return new RestaurantUseCaseImpl(
+                restaurantRepository,
+                ownerValidator
+        );
     }
 }
