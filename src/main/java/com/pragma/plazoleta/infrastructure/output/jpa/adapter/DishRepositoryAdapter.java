@@ -13,7 +13,9 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Component
 @RequiredArgsConstructor
@@ -39,5 +41,10 @@ public class DishRepositoryAdapter implements DishRepositoryPort {
         Pageable pageable = paginationQueryMapper.toPageable(paginationQuery);
         Page<Dish> page = repository.findAllByRestaurant_IdAndCategory_Id(restaurantId, categoryId, pageable).map(entityMapper::toDomain);
         return paginationResultMapper.toPaginatedResult(page);
+    }
+
+    @Override
+    public List<Dish> findAllById(List<Long> ids) {
+        return repository.findAllById(ids).stream().map(entityMapper::toDomain).toList();
     }
 }

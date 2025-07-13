@@ -1,7 +1,7 @@
 package com.pragma.plazoleta.infrastructure.input.rest;
 
 import com.pragma.plazoleta.application.dto.request.CreateRestaurantCommand;
-import com.pragma.plazoleta.application.dto.response.ErrorResponse;
+import com.pragma.plazoleta.application.dto.common.ErrorResponse;
 import com.pragma.plazoleta.application.dto.response.RestaurantItemPageResponse;
 import com.pragma.plazoleta.application.dto.response.RestaurantResponse;
 import com.pragma.plazoleta.application.mapper.RestaurantResponseMapper;

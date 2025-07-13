@@ -2,6 +2,7 @@ package com.pragma.plazoleta.domain.usecase.impl;
 
 import com.pragma.plazoleta.application.dto.common.PaginationQuery;
 import com.pragma.plazoleta.application.dto.common.PaginationResult;
+import com.pragma.plazoleta.domain.validation.Validation;
 import com.pragma.plazoleta.domain.exception.CategoryNotFoundException;
 import com.pragma.plazoleta.domain.exception.DishNotFoundException;
 import com.pragma.plazoleta.domain.exception.InvalidOwnerException;
@@ -14,15 +15,7 @@ import com.pragma.plazoleta.domain.spi.persistence.CategoryRepositoryPort;
 import com.pragma.plazoleta.domain.spi.persistence.DishRepositoryPort;
 import com.pragma.plazoleta.domain.spi.persistence.RestaurantRepositoryPort;
 import com.pragma.plazoleta.domain.usecase.DishUseCase;
-import com.pragma.plazoleta.domain.validation.FieldValidationError;
-import com.pragma.plazoleta.domain.validation.exception.ValidationException;
 import lombok.RequiredArgsConstructor;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
-
-import static com.pragma.plazoleta.domain.validation.ValidationUtils.*;
 
 @RequiredArgsConstructor
 public class DishUseCaseImpl implements DishUseCase {
@@ -32,66 +25,56 @@ public class DishUseCaseImpl implements DishUseCase {
     private final RestaurantRepositoryPort restaurantRepositoryPort;
     private final OwnerValidatorPort ownerValidatorPort;
 
-    private void validateCreateDish(Long ownerId, Dish command) {
-        List<FieldValidationError> errors = new ArrayList<>();
-
-        errors.add(validateNotBlank("name", command.getName()));
-        errors.add(validateNotBlank("description", command.getDescription()));
-        errors.add(validatePositive("price", command.getPrice()));
-        errors.add(validateNotBlank("imageUrl", command.getImageUrl()));
-
-        errors.add(validateNotNull("categoryId", command.getCategory()));
-        errors.add(validateNotNull("categoryId", command.getCategory() != null ? command.getCategory().getId() : null));
-        errors.add(validateNotNull("restaurantId", command.getRestaurant()));
-        errors.add(validateNotNull("restaurantId", command.getRestaurant() != null ? command.getRestaurant().getId() : null));
-
-        // Elimina los nulls
-        errors.removeIf(Objects::isNull);
-
-        // Si hay errores, los lanzas
-        if (!errors.isEmpty()) {
-            throw new ValidationException(errors);
-        }
+    private void validateCreateDish(Long ownerId, Dish dish) {
+        Validation.builder(dish)
+                .notNull("ownerId", d -> ownerId)
+                .notBlank("name", Dish::getName)
+                .notBlank("description", Dish::getDescription)
+                .positive("price", Dish::getPrice)
+                .notBlank("imageUrl", Dish::getImageUrl)
+                .nested("category", Dish::getCategory, v -> v
+                        .notNull("id", Category::getId)
+                        .positive("id", Category::getId)
+                        .build()
+                )
+                .nested("restaurant", Dish::getRestaurant, v -> v
+                        .notNull("id", Restaurant::getId)
+                        .positive("id", Restaurant::getId)
+                        .build()
+                )
+                .build()
+                .validate();
     }
 
     @Override
-    public Dish createDish(Long ownerId, Dish command) {
-        validateCreateDish(ownerId, command);
+    public Dish createDish(Long ownerId, Dish dish) {
+        validateCreateDish(ownerId, dish);
 
-        if (!ownerValidatorPort.isOwnerOfRestaurant(ownerId, command.getRestaurant().getId())) {
+        Category category = categoryRepositoryPort.findById(dish.getCategory().getId())
+                .orElseThrow(() -> new CategoryNotFoundException(dish.getCategory().getId()));
+
+        Restaurant restaurant = restaurantRepositoryPort.findById(dish.getRestaurant().getId())
+                .orElseThrow(() -> new RestaurantNotFoundException(dish.getRestaurant().getId()));
+
+        if (!ownerValidatorPort.isOwnerOfRestaurant(ownerId, dish.getRestaurant().getId())) {
             throw new InvalidOwnerException("Solo el propietario del restaurante puede crear platos.");
         }
 
-        Category category = categoryRepositoryPort.findById(command.getCategory().getId())
-                .orElseThrow(() -> new CategoryNotFoundException(command.getCategory().getId()));
-
-        Restaurant restaurant = restaurantRepositoryPort.findById(command.getRestaurant().getId())
-                .orElseThrow(() -> new RestaurantNotFoundException(command.getRestaurant().getId()));
-
-        Dish dish = Dish.builder()
-                .name(command.getName())
-                .price(command.getPrice())
-                .description(command.getDescription())
-                .imageUrl(command.getImageUrl())
-                .category(category)
-                .restaurant(restaurant)
-                .active(true)
-                .build();
+        dish.setCategory(category);
+        dish.setRestaurant(restaurant);
+        dish.setActive(true);
 
         return dishRepositoryPort.save(dish);
     }
 
     private void validateUpdateDish(Dish command) {
-        List<FieldValidationError> errors = new ArrayList<>();
-
-        errors.add(validatePositive("price", command.getPrice()));
-        errors.add(validateNotBlank("description", command.getDescription()));
-
-        errors.removeIf(Objects::isNull);
-
-        if (!errors.isEmpty()) {
-            throw new ValidationException(errors);
-        }
+        Validation.builder(command)
+                .notNull("price", Dish::getPrice)
+                .positive("price", Dish::getPrice)
+                .notNull("description", Dish::getDescription)
+                .notBlank("description", Dish::getDescription)
+                .build()
+                .validate();
     }
 
     @Override
@@ -112,14 +95,10 @@ public class DishUseCaseImpl implements DishUseCase {
     }
 
     private void validateUpdateDishStatus(Dish command) {
-        List<FieldValidationError> errors = new ArrayList<>();
-
-        errors.add(validateNotNull("active", command.isActive()));
-        errors.removeIf(Objects::isNull);
-
-        if (!errors.isEmpty()) {
-            throw new ValidationException(errors);
-        }
+        Validation.builder(command)
+                .notNull("active", Dish::getActive)
+                .build()
+                .validate();
     }
 
     @Override
@@ -133,7 +112,7 @@ public class DishUseCaseImpl implements DishUseCase {
             throw new InvalidOwnerException("Solo el propietario del restaurante puede actualizar el estado de los platos.");
         }
 
-        dish.setActive(command.isActive());
+        dish.setActive(command.getActive());
 
         return dishRepositoryPort.save(dish);
     }

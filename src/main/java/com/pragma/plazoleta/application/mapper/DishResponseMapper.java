@@ -12,6 +12,7 @@ import org.mapstruct.MappingConstants;
 @Mapper(componentModel = MappingConstants.ComponentModel.SPRING, uses = {CategoryResponseMapper.class})
 public interface DishResponseMapper {
 
+    @Mapping(source = "category.id", target = "categoryId")
     @Mapping(source = "restaurant.id", target = "restaurantId")
     DishResponse toResponse(Dish domain);
 

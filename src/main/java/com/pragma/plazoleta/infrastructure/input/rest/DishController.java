@@ -4,7 +4,7 @@ import com.pragma.plazoleta.application.dto.request.CreateDishCommand;
 import com.pragma.plazoleta.application.dto.request.UpdateDishCommand;
 import com.pragma.plazoleta.application.dto.request.UpdateStatusDishCommand;
 import com.pragma.plazoleta.application.dto.response.DishResponse;
-import com.pragma.plazoleta.application.dto.response.ErrorResponse;
+import com.pragma.plazoleta.application.dto.common.ErrorResponse;
 import com.pragma.plazoleta.application.service.DishService;
 import com.pragma.plazoleta.domain.model.AuthenticatedUser;
 import io.swagger.v3.oas.annotations.Operation;

@@ -10,11 +10,18 @@ import lombok.NoArgsConstructor;
 public class DishResponse {
 
     private Long id;
+
     private String name;
-    private int price;
+
+    private Integer price;
+
     private String description;
+
     private String imageUrl;
-    private boolean active;
+
+    private Boolean active;
+
     private Long restaurantId;
-    private CategoryResponse category;
+
+    private Long categoryId;
 }

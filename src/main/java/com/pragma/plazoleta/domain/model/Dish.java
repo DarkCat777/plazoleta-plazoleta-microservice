@@ -11,12 +11,21 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class Dish {
+
     private Long id;
+
     private String name;
+
     private Category category;
+
     private String description;
-    private int price;
+
+    private Integer price;
+
     private Restaurant restaurant;
+
     private String imageUrl;
-    private boolean active;
+
+    private Boolean active;
+
 }

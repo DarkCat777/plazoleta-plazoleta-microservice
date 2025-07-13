@@ -11,7 +11,7 @@ public class CreateDishCommand {
 
     private String name;
 
-    private int price;
+    private Integer price;
 
     private String description;
 

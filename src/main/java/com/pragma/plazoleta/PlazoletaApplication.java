@@ -7,6 +7,7 @@ import io.swagger.v3.oas.annotations.security.SecurityScheme;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.cloud.openfeign.EnableFeignClients;
+import org.springframework.data.web.config.EnableSpringDataWebSupport;
 
 @OpenAPIDefinition(info = @Info(title = "Plazoleta Microservice", version = "1.0"))
 @SecurityScheme(
@@ -17,6 +18,7 @@ import org.springframework.cloud.openfeign.EnableFeignClients;
 )
 @EnableFeignClients
 @SpringBootApplication
+@EnableSpringDataWebSupport(pageSerializationMode = EnableSpringDataWebSupport.PageSerializationMode.VIA_DTO)
 public class PlazoletaApplication {
 
     public static void main(String[] args) {

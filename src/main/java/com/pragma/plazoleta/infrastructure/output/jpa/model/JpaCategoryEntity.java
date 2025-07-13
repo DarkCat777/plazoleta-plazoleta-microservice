@@ -1,13 +1,17 @@
 package com.pragma.plazoleta.infrastructure.output.jpa.model;
 
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Entity
 @Table(name = "categorias")
-@Getter
 @Setter
+@Getter
+@NoArgsConstructor
+@AllArgsConstructor
 public class JpaCategoryEntity {
 
     @Id

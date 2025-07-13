@@ -41,5 +41,10 @@ public class RestaurantRepositoryAdapter implements RestaurantRepositoryPort {
         return paginationResultMapper.toPaginatedResult(page);
     }
 
+    @Override
+    public boolean existsById(Long restaurantId) {
+        return repository.existsById(restaurantId);
+    }
+
 }
 

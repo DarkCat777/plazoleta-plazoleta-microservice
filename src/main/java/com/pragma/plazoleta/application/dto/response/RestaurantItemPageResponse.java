@@ -8,7 +8,11 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class RestaurantItemPageResponse {
+
     private Long id;
+
     private String name;
+
     private String logoUrl;
+
 }

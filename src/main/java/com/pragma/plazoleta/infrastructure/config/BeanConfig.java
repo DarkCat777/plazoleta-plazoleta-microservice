@@ -3,10 +3,13 @@ package com.pragma.plazoleta.infrastructure.config;
 import com.pragma.plazoleta.domain.spi.OwnerValidatorPort;
 import com.pragma.plazoleta.domain.spi.persistence.CategoryRepositoryPort;
 import com.pragma.plazoleta.domain.spi.persistence.DishRepositoryPort;
+import com.pragma.plazoleta.domain.spi.persistence.OrderRepositoryPort;
 import com.pragma.plazoleta.domain.spi.persistence.RestaurantRepositoryPort;
 import com.pragma.plazoleta.domain.usecase.DishUseCase;
+import com.pragma.plazoleta.domain.usecase.OrderUseCase;
 import com.pragma.plazoleta.domain.usecase.RestaurantUseCase;
 import com.pragma.plazoleta.domain.usecase.impl.DishUseCaseImpl;
+import com.pragma.plazoleta.domain.usecase.impl.OrderUseCaseImpl;
 import com.pragma.plazoleta.domain.usecase.impl.RestaurantUseCaseImpl;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -39,4 +42,19 @@ public class BeanConfig {
                 ownerValidator
         );
     }
+
+
+    @Bean
+    public OrderUseCase createOrderUseCase(
+            OrderRepositoryPort orderRepositoryPort,
+            DishRepositoryPort dishRepositoryPort,
+            RestaurantRepositoryPort restaurantRepositoryPort
+    ) {
+        return new OrderUseCaseImpl(
+                orderRepositoryPort,
+                dishRepositoryPort,
+                restaurantRepositoryPort
+        );
+    }
+
 }
