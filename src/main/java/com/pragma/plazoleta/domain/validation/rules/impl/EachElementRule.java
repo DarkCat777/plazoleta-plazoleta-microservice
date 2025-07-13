@@ -2,6 +2,7 @@ package com.pragma.plazoleta.domain.validation.rules.impl;
 
 import com.pragma.plazoleta.domain.validation.CompositeValidationError;
 import com.pragma.plazoleta.domain.validation.FieldValidationError;
+import com.pragma.plazoleta.domain.validation.ItemFieldValidationError;
 import com.pragma.plazoleta.domain.validation.rules.ValidationRule;
 import lombok.RequiredArgsConstructor;
 
@@ -29,11 +30,13 @@ public class EachElementRule<T, E> implements ValidationRule<T> {
             for (ValidationRule<E> rule : rules) {
                 Optional<FieldValidationError> error = rule.validate(item);
                 if (error.isPresent()) {
-                    errors.add(new FieldValidationError(
-                            "[" + i + "]." + error.get().getField(),
-                            elements.get(i),
-                            error.get().getMessage()
-                    ));
+                    errors.add(
+                            new ItemFieldValidationError(
+                                    i,
+                                    error.get().getField(),
+                                    elements.get(i),
+                                    error.get().getMessage()
+                            ));
                 }
             }
         }
