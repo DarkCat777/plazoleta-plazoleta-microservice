@@ -1,6 +1,7 @@
 package com.pragma.plazoleta.domain.validation.rules.impl;
 
-import com.pragma.plazoleta.domain.validation.FieldValidationError;
+import com.pragma.plazoleta.domain.validation.errors.ValidationError;
+import com.pragma.plazoleta.domain.validation.errors.impl.FieldError;
 import com.pragma.plazoleta.domain.validation.rules.ValidationRule;
 import lombok.RequiredArgsConstructor;
 
@@ -26,11 +27,11 @@ public class MinYearDifferenceRule<T> implements ValidationRule<T> {
     }
 
     @Override
-    public Optional<FieldValidationError> validate(T target) {
+    public Optional<ValidationError> validate(T target) {
         LocalDate date = extractor.apply(target);
         LocalDate fromDate = referenceExtractor.apply(target);
         if (date == null || Period.between(date, fromDate).getYears() < minYears) {
-            return Optional.of(new FieldValidationError(fieldName, date, MessageFormat.format(message, minYears)));
+            return Optional.of(new FieldError(fieldName, date, MessageFormat.format(message, minYears)));
         }
         return Optional.empty();
     }

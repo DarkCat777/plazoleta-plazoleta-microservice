@@ -1,6 +1,7 @@
 package com.pragma.plazoleta.domain.validation.rules.impl;
 
-import com.pragma.plazoleta.domain.validation.FieldValidationError;
+import com.pragma.plazoleta.domain.validation.errors.ValidationError;
+import com.pragma.plazoleta.domain.validation.errors.impl.FieldError;
 import com.pragma.plazoleta.domain.validation.rules.ValidationRule;
 import lombok.RequiredArgsConstructor;
 
@@ -22,10 +23,10 @@ public class NotEmptyRule<T> implements ValidationRule<T> {
     }
 
     @Override
-    public Optional<FieldValidationError> validate(T target) {
+    public Optional<ValidationError> validate(T target) {
         List<?> value = extractor.apply(target);
         if (value == null || value.isEmpty()) {
-            return Optional.of(new FieldValidationError(fieldName, value, message));
+            return Optional.of(new FieldError(fieldName, value, message));
         }
         return Optional.empty();
     }

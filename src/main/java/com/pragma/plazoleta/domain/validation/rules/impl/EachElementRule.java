@@ -1,8 +1,8 @@
 package com.pragma.plazoleta.domain.validation.rules.impl;
 
-import com.pragma.plazoleta.domain.validation.CompositeValidationError;
-import com.pragma.plazoleta.domain.validation.FieldValidationError;
-import com.pragma.plazoleta.domain.validation.ItemFieldValidationError;
+import com.pragma.plazoleta.domain.validation.errors.ValidationError;
+import com.pragma.plazoleta.domain.validation.errors.impl.CompositeError;
+import com.pragma.plazoleta.domain.validation.errors.impl.CompositeItemError;
 import com.pragma.plazoleta.domain.validation.rules.ValidationRule;
 import lombok.RequiredArgsConstructor;
 
@@ -19,30 +19,31 @@ public class EachElementRule<T, E> implements ValidationRule<T> {
     private final List<ValidationRule<E>> rules;
 
     @Override
-    public Optional<FieldValidationError> validate(T target) {
+    public Optional<ValidationError> validate(T target) {
         List<E> elements = extractor.apply(target);
         if (elements == null) {
             return Optional.empty();
         }
-        List<FieldValidationError> errors = new ArrayList<>();
+
+        List<ValidationError> indexedErrors = new ArrayList<>();
+
         for (int i = 0; i < elements.size(); i++) {
             E item = elements.get(i);
+            List<ValidationError> itemErrors = new ArrayList<>();
+
             for (ValidationRule<E> rule : rules) {
-                Optional<FieldValidationError> error = rule.validate(item);
-                if (error.isPresent()) {
-                    errors.add(
-                            new ItemFieldValidationError(
-                                    i,
-                                    error.get().getField(),
-                                    elements.get(i),
-                                    error.get().getMessage()
-                            ));
-                }
+                rule.validate(item).ifPresent(itemErrors::add);
+            }
+
+            if (!itemErrors.isEmpty()) {
+                indexedErrors.add(new CompositeItemError(i, item, itemErrors));
             }
         }
-        if (!errors.isEmpty()) {
-            return Optional.of(new CompositeValidationError(fieldName, errors));
+
+        if (!indexedErrors.isEmpty()) {
+            return Optional.of(new CompositeError(fieldName, elements, indexedErrors));
         }
+
         return Optional.empty();
     }
 }

@@ -1,6 +1,7 @@
 package com.pragma.plazoleta.domain.validation.rules.impl;
 
-import com.pragma.plazoleta.domain.validation.FieldValidationError;
+import com.pragma.plazoleta.domain.validation.errors.ValidationError;
+import com.pragma.plazoleta.domain.validation.errors.impl.FieldError;
 import com.pragma.plazoleta.domain.validation.rules.ValidationRule;
 import lombok.RequiredArgsConstructor;
 
@@ -22,10 +23,10 @@ public class MinLengthRule<T> implements ValidationRule<T> {
     }
 
     @Override
-    public Optional<FieldValidationError> validate(T target) {
+    public Optional<ValidationError> validate(T target) {
         String value = extractor.apply(target);
         if (value == null || value.length() < min) {
-            return Optional.of(new FieldValidationError(fieldName, value, String.format(message, min, value)));
+            return Optional.of(new FieldError(fieldName, value, String.format(message, min, value)));
         }
         return Optional.empty();
     }

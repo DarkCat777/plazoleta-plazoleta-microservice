@@ -1,4 +1,4 @@
-package com.pragma.plazoleta.domain.validation.extractor;
+package com.pragma.plazoleta.domain.validation.rules.extractor;
 
 
 import java.math.BigDecimal;

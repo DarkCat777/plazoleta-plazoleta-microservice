@@ -1,9 +1,9 @@
 package com.pragma.plazoleta.domain.validation;
 
-import com.pragma.plazoleta.domain.model.Restaurant;
+import com.pragma.plazoleta.domain.validation.errors.ValidationError;
 import com.pragma.plazoleta.domain.validation.exception.ValidationException;
-import com.pragma.plazoleta.domain.validation.extractor.*;
 import com.pragma.plazoleta.domain.validation.rules.ValidationRule;
+import com.pragma.plazoleta.domain.validation.rules.extractor.*;
 import com.pragma.plazoleta.domain.validation.rules.impl.*;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
@@ -29,7 +29,7 @@ public class Validation<T> {
     }
 
     public void validate() throws ValidationException {
-        List<FieldValidationError> errors = rules.stream()
+        List<ValidationError> errors = rules.stream()
                 .map(rule -> rule.validate(object))
                 .flatMap(Optional::stream)
                 .toList();
@@ -194,7 +194,7 @@ public class Validation<T> {
         ) {
             RuleChainBuilder<R> builder = new RuleChainBuilder<>();
             List<ValidationRule<R>> rules = ruleFactory.apply(builder);
-            this.rules.add(new NestedValidationRule<>(fieldName, extractor, rules));
+            this.rules.add(new NestedRule<>(fieldName, extractor, rules));
             return this;
         }
 
