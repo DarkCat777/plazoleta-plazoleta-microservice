@@ -1,6 +1,6 @@
 package com.pragma.plazoleta.domain.usecase.impl;
 
-import com.pragma.plazoleta.domain.validation.Validation;
+import com.pragma.plazoleta.domain.exception.BusinessLogicException;
 import com.pragma.plazoleta.domain.model.Dish;
 import com.pragma.plazoleta.domain.model.Order;
 import com.pragma.plazoleta.domain.model.OrderDetail;
@@ -9,7 +9,7 @@ import com.pragma.plazoleta.domain.spi.persistence.DishRepositoryPort;
 import com.pragma.plazoleta.domain.spi.persistence.OrderRepositoryPort;
 import com.pragma.plazoleta.domain.spi.persistence.RestaurantRepositoryPort;
 import com.pragma.plazoleta.domain.usecase.OrderUseCase;
-import com.pragma.plazoleta.domain.exception.BusinessLogicException;
+import com.pragma.plazoleta.domain.validation.Validation;
 import lombok.RequiredArgsConstructor;
 
 import java.time.LocalDateTime;
@@ -48,8 +48,12 @@ public class OrderUseCaseImpl implements OrderUseCase {
                 .positive("restaurantId", Order::getRestaurantId)
                 .notEmpty("dishes", Order::getDishes)
                 .each("dishes", Order::getDishes, item -> item
-                        .notNull("dishId", OrderDetail::getDishId)
-                        .positive("dishId", OrderDetail::getDishId)
+                        .notNull("dish", OrderDetail::getDish)
+                        .nested("dish", OrderDetail::getDish, v -> v
+                                .notNull("id", Dish::getId)
+                                .positive("id", Dish::getId)
+                                .build()
+                        )
                         .positive("quantity", OrderDetail::getQuantity)
                         .build()
                 ).build()
@@ -76,7 +80,7 @@ public class OrderUseCaseImpl implements OrderUseCase {
 
     // Requisito 1: Todos los platos deben existir y pertenecer al restaurante
     private void validateDishesExistAndBelongToRestaurant(Order order) {
-        List<Long> dishIds = order.getDishes().stream().map(OrderDetail::getDishId).toList();
+        List<Long> dishIds = order.getDishes().stream().map(dish -> dish.getDish().getId()).toList();
         List<Dish> dishes = dishRepositoryPort.findAllById(dishIds);
         if (dishes.size() != dishIds.size()) {
             throw new BusinessLogicException(DISH_NOT_EXIST);
@@ -95,7 +99,7 @@ public class OrderUseCaseImpl implements OrderUseCase {
         validateCreateOrder(order);
 
         List<OrderDetail> details = order.getDishes().stream()
-                .map(d -> new OrderDetail(null, d.getDishId(), d.getQuantity()))
+                .map(d -> new OrderDetail(null, d.getDish(), d.getQuantity()))
                 .toList();
 
         order.setStatus(OrderStatus.PENDING);

@@ -3,12 +3,12 @@ package com.pragma.plazoleta.domain.usecase.impl;
 import com.pragma.plazoleta.application.dto.common.PaginationQuery;
 import com.pragma.plazoleta.application.dto.common.PaginationResult;
 import com.pragma.plazoleta.domain.exception.BusinessLogicException;
-import com.pragma.plazoleta.domain.exception.ValidationException;
 import com.pragma.plazoleta.domain.model.Restaurant;
 import com.pragma.plazoleta.domain.spi.OwnerValidatorPort;
 import com.pragma.plazoleta.domain.spi.persistence.RestaurantRepositoryPort;
 import com.pragma.plazoleta.domain.usecase.RestaurantUseCase;
 import com.pragma.plazoleta.domain.validation.Validation;
+import com.pragma.plazoleta.domain.validation.exception.ValidationException;
 import lombok.RequiredArgsConstructor;
 
 

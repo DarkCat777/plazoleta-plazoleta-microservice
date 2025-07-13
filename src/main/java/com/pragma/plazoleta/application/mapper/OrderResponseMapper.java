@@ -7,7 +7,7 @@ import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.MappingConstants;
 
-@Mapper(componentModel = MappingConstants.ComponentModel.SPRING, uses = {OrderDetailResponseMapper.class})
+@Mapper(componentModel = MappingConstants.ComponentModel.SPRING, uses = {OrderDetailResponseMapper.class, DishResponseMapper.class})
 public interface OrderResponseMapper {
 
     @Mapping(target = "id", ignore = true) // En la creación no se tiene id

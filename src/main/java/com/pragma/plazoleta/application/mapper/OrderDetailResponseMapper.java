@@ -9,6 +9,7 @@ import org.mapstruct.MappingConstants;
 @Mapper(componentModel = MappingConstants.ComponentModel.SPRING)
 public interface OrderDetailResponseMapper {
 
+    @Mapping(target = "dish.id", source = "dishId")
     @Mapping(target = "orderId", ignore = true) // No existe en la creación de la orden
     OrderDetail toDomain(CreateOrderDetailCommand orderDetail);
 

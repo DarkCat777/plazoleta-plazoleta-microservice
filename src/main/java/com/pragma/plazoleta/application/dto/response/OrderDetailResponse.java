@@ -10,7 +10,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class OrderDetailResponse {
 
-    private Long dishId;
+    private DishResponse dish;
 
     private Integer quantity;
 

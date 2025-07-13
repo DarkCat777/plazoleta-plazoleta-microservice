@@ -39,9 +39,9 @@ public class OrderRepositoryAdapter implements OrderRepositoryPort {
         List<JpaOrderDetailEntity> jpaOrderDetailEntity = order.getDishes().stream()
                 .map(detail -> {
                     JpaOrderDetailEntity entity = orderDetailEntityMapper.toEntity(detail);
-                    entity.setDish(jpaDishRepository.getReferenceById(detail.getDishId()));
+                    entity.setDish(jpaDishRepository.getReferenceById(detail.getDish().getId()));
                     entity.setOrder(jpaOrderEntity);
-                    entity.setId(new JpaOrderDetailId(jpaOrderEntity.getId(), detail.getDishId()));
+                    entity.setId(new JpaOrderDetailId(jpaOrderEntity.getId(), detail.getDish().getId()));
                     return entity;
                 })
                 .collect(Collectors.toList());
