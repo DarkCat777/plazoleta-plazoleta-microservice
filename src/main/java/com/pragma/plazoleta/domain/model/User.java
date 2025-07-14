@@ -29,5 +29,7 @@ public class User {
 
     private String password;
 
+    private Long restaurantId;
+
     private Role role;
 }

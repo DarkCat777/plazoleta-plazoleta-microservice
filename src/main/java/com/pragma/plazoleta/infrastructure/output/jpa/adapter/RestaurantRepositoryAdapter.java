@@ -46,5 +46,10 @@ public class RestaurantRepositoryAdapter implements RestaurantRepositoryPort {
         return repository.existsById(restaurantId);
     }
 
+    @Override
+    public Optional<Restaurant> findByOwnerId(Long ownerId) {
+        return repository.findByOwnerId(ownerId).map(entityMapper::toDomain);
+    }
+
 }
 

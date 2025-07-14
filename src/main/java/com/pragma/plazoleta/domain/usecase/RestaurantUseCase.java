@@ -10,4 +10,5 @@ public interface RestaurantUseCase {
 
     PaginationResult<Restaurant> findAllPaginated(PaginationQuery query);
 
+    Restaurant findByOwnerId(Long ownerId);
 }

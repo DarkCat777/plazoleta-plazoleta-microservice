@@ -1,8 +1,10 @@
 package com.pragma.plazoleta.infrastructure.security;
 
 import com.pragma.plazoleta.domain.model.RoleName;
+import com.pragma.plazoleta.domain.model.User;
 import com.pragma.plazoleta.domain.spi.OwnerValidatorPort;
 import com.pragma.plazoleta.domain.spi.UserClientPort;
+import com.pragma.plazoleta.infrastructure.exception.UserNotFoundException;
 import com.pragma.plazoleta.infrastructure.output.jpa.repository.JpaRestaurantRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -16,7 +18,9 @@ public class OwnerValidatorAdapter implements OwnerValidatorPort {
 
     @Override
     public boolean isOwner(Long userId) {
-        return userClientPort.getUserById(userId).getRole().getName().equals(RoleName.OWNER);
+        User user = userClientPort.getUserById(userId)
+                .orElseThrow(() -> new UserNotFoundException(userId));
+        return user.getRole().getName().equals(RoleName.OWNER);
     }
 
     @Override

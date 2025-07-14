@@ -25,6 +25,7 @@ public class RestaurantUseCaseImpl implements RestaurantUseCase {
      * 2. Validar que el ID del usuario tenga el rol OWNER.
      * 3. NIT y teléfono deben ser únicamente numéricos. Teléfono máx. 13 y puede tener '+'.
      * 4. El nombre no puede ser solo números.
+     * 5. Validar que el usuario no tenga otro RESTAURANTE
      */
     public void validateCreateRestaurant(Restaurant restaurant) throws ValidationException, BusinessLogicException {
         // Validaciones estructurales y de formato: Req 1, 3 y 4
@@ -45,6 +46,10 @@ public class RestaurantUseCaseImpl implements RestaurantUseCase {
         if (!ownerValidatorPort.isOwner(restaurant.getOwnerId())) {
             throw new BusinessLogicException("El usuario no tiene el rol OWNER");
         }
+        // Req 5: Validar que el usuario tenga un RESTAURANTE
+        if (restaurantRepositoryPort.findByOwnerId(restaurant.getOwnerId()).isPresent()) {
+            throw new BusinessLogicException("El usuario con el rol OWNER ya tiene un restaurante.");
+        }
     }
 
     @Override
@@ -56,5 +61,11 @@ public class RestaurantUseCaseImpl implements RestaurantUseCase {
     @Override
     public PaginationResult<Restaurant> findAllPaginated(PaginationQuery query) {
         return restaurantRepositoryPort.findAllPaged(query);
+    }
+
+    @Override
+    public Restaurant findByOwnerId(Long ownerId) {
+        return restaurantRepositoryPort.findByOwnerId(ownerId)
+                .orElseThrow(() -> new BusinessLogicException("El propietario no tiene un restaurante."));
     }
 }

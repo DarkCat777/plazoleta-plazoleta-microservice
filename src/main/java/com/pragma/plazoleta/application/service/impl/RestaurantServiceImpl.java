@@ -38,4 +38,9 @@ public class RestaurantServiceImpl implements RestaurantService {
                 .map(responseMapper::toItemPageResponse);
         return paginationResultMapper.toPage(paginationResult);
     }
+
+    @Override
+    public RestaurantResponse findRestaurantByOwnerId(Long ownerId) {
+        return responseMapper.toResponse(useCase.findByOwnerId(ownerId));
+    }
 }

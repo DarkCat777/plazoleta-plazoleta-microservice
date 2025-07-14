@@ -12,4 +12,5 @@ public interface RestaurantService {
 
     Page<RestaurantItemPageResponse> findAllPaginated(Pageable pageable);
 
+    RestaurantResponse findRestaurantByOwnerId(Long ownerId);
 }

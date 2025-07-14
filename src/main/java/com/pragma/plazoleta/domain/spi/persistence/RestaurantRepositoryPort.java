@@ -14,4 +14,6 @@ public interface RestaurantRepositoryPort {
     PaginationResult<Restaurant> findAllPaged(PaginationQuery pageable);
 
     boolean existsById(Long restaurantId);
+
+    Optional<Restaurant> findByOwnerId(Long ownerId);
 }

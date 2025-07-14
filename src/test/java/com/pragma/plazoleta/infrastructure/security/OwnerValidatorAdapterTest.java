@@ -11,6 +11,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.LocalDate;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -31,9 +32,9 @@ class OwnerValidatorAdapterTest {
         // given
         Long userId = 1L;
         Role roleResponse = new Role(3L, RoleName.OWNER, "owner role");
-        User userResponse = new User(userId, "Ana", "Torres", "987654321", "23232332", LocalDate.now(), "ana@correo.com", null, roleResponse);
+        User userResponse = new User(userId, "Ana", "Torres", "987654321", "23232332", LocalDate.now(), "ana@correo.com", null, 1L, roleResponse);
 
-        when(userClientPort.getUserById(userId)).thenReturn(userResponse);
+        when(userClientPort.getUserById(userId)).thenReturn(Optional.of(userResponse));
 
         // when
         boolean result = ownerValidatorAdapter.isOwner(userId);
@@ -48,9 +49,9 @@ class OwnerValidatorAdapterTest {
         // given
         Long userId = 2L;
         Role roleResponse = new Role(3L, RoleName.CUSTOMER, "customer role");
-        User userResponse = new User(userId, "Ana", "Torres", "987654321", "23232332", LocalDate.now(), "ana@correo.com", null, roleResponse);
+        User userResponse = new User(userId, "Ana", "Torres", "987654321", "23232332", LocalDate.now(), "ana@correo.com", null,1L, roleResponse);
 
-        when(userClientPort.getUserById(userId)).thenReturn(userResponse);
+        when(userClientPort.getUserById(userId)).thenReturn(Optional.of(userResponse));
 
         // when
         boolean result = ownerValidatorAdapter.isOwner(userId);

@@ -1,11 +1,11 @@
 package com.pragma.plazoleta.infrastructure.input.rest;
 
-import com.pragma.plazoleta.application.dto.request.CreateRestaurantCommand;
 import com.pragma.plazoleta.application.dto.common.ErrorResponse;
+import com.pragma.plazoleta.application.dto.request.CreateRestaurantCommand;
 import com.pragma.plazoleta.application.dto.response.RestaurantItemPageResponse;
 import com.pragma.plazoleta.application.dto.response.RestaurantResponse;
-import com.pragma.plazoleta.application.mapper.RestaurantResponseMapper;
 import com.pragma.plazoleta.application.service.RestaurantService;
+import com.pragma.plazoleta.domain.model.AuthenticatedUser;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -20,6 +20,7 @@ import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -29,7 +30,6 @@ import org.springframework.web.bind.annotation.*;
 public class RestaurantController {
 
     private final RestaurantService restaurantService;
-    private final RestaurantResponseMapper restaurantMapper;
 
     @Operation(
             summary = "Crear restaurante",
@@ -80,4 +80,11 @@ public class RestaurantController {
         return ResponseEntity.ok(restaurantService.findAllPaginated(pageable));
     }
 
+    @PreAuthorize("hasRole('OWNER')")
+    @GetMapping("/owner")
+    public ResponseEntity<RestaurantResponse> getRestaurantByOwnerId(
+            @AuthenticationPrincipal AuthenticatedUser authenticatedUser
+    ) {
+        return ResponseEntity.ok(restaurantService.findRestaurantByOwnerId(authenticatedUser.getId()));
+    }
 }

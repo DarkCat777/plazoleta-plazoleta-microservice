@@ -15,13 +15,15 @@ public class UserResponse {
 
     private String lastname;
 
-    private String email;
+    private String identityDocument;
 
     private String phoneNumber;
 
-    private String identityDocument;
-
     private LocalDate birthdate;
+
+    private String email;
+
+    private Long restaurantId;
 
     private RoleResponse role;
 }
