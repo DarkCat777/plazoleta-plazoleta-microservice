@@ -4,6 +4,7 @@ import com.pragma.plazoleta.application.dto.common.PaginationQuery;
 import com.pragma.plazoleta.application.dto.common.PaginationResult;
 import com.pragma.plazoleta.domain.exception.BusinessLogicException;
 import com.pragma.plazoleta.domain.exception.InvalidOwnerException;
+import com.pragma.plazoleta.domain.exception.OrderNotFoundException;
 import com.pragma.plazoleta.domain.model.*;
 import com.pragma.plazoleta.domain.spi.UserClientPort;
 import com.pragma.plazoleta.domain.spi.persistence.DishRepositoryPort;
@@ -11,11 +12,14 @@ import com.pragma.plazoleta.domain.spi.persistence.OrderRepositoryPort;
 import com.pragma.plazoleta.domain.spi.persistence.RestaurantRepositoryPort;
 import com.pragma.plazoleta.domain.usecase.OrderUseCase;
 import com.pragma.plazoleta.domain.validation.Validation;
+import com.pragma.plazoleta.domain.validation.rules.extractor.LongExtractor;
+import com.pragma.plazoleta.infrastructure.exception.UserNotFoundException;
 import lombok.RequiredArgsConstructor;
 
 import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 
 import static com.pragma.plazoleta.domain.exception.BusinessLogicException.*;
 
@@ -131,5 +135,35 @@ public class OrderUseCaseImpl implements OrderUseCase {
         }
 
         return orderRepositoryPort.findByRestaurantIdAndStatus(user.getRestaurantId(), status, paginationQuery);
+    }
+
+    @Override
+    public Order assignOrderToEmployee(Long orderId, Long employeeId) {
+        Validation.builder(null)
+                .notNull("orderId", t -> orderId)
+                .positive("orderId", (LongExtractor<Object>) t -> orderId)
+                .notNull("employeeId", t -> employeeId)
+                .positive("employeeId", (LongExtractor<Object>) t -> employeeId)
+                .build()
+                .validate();
+
+        Order order = orderRepositoryPort.findById(orderId)
+                .orElseThrow(() -> new OrderNotFoundException(orderId));
+
+        if (order.getStatus() != OrderStatus.PENDING) {
+            throw new BusinessLogicException("Solo se pueden asignar pedidos pendientes");
+        }
+
+        User employee = userClientPort.getUserById(employeeId)
+                .orElseThrow(() -> new UserNotFoundException(employeeId));
+
+        if (!Objects.equals(order.getRestaurantId(), employee.getRestaurantId())) {
+            throw new BusinessLogicException("No puedes asignarte pedidos de otro restaurante");
+        }
+
+        order.setChefId(employeeId);
+        order.setStatus(OrderStatus.IN_PREPARATION);
+
+        return orderRepositoryPort.save(order);
     }
 }

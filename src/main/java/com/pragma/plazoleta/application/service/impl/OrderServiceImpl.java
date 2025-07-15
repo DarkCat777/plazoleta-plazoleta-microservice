@@ -38,4 +38,9 @@ public class OrderServiceImpl implements OrderService {
                 .map(orderResponseMapper::toResponse);
         return paginationResultMapper.toPage(paginationResult);
     }
+
+    @Override
+    public OrderResponse assignOrderToEmployee(Long orderId, Long employeeId) {
+        return orderResponseMapper.toResponse(orderUseCase.assignOrderToEmployee(orderId, employeeId));
+    }
 }

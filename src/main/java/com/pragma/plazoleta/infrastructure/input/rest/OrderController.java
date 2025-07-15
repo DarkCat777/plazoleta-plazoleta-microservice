@@ -76,4 +76,30 @@ public class OrderController {
                 orderService.getOrdersByStatusForEmployee(authenticatedUser.getId(), query, pageable)
         );
     }
+
+    @Operation(
+            summary = "Asignar pedido a empleado",
+            description = "Permite que un empleado se asigne a un pedido pendiente de su restaurante y cambie su estado a EN_PREPARATION."
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Pedido asignado exitosamente"),
+            @ApiResponse(responseCode = "400", description = "Validación fallida o negocio inválido (pedido ya asignado, empleado no pertenece al restaurante)",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "404", description = "Pedido o empleado no encontrado",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "403", description = "No autorizado para acceder a este recurso",
+                    content = @Content)
+    })
+    @PreAuthorize("hasRole('EMPLOYEE')")
+    @PatchMapping("/{orderId}/assign")
+    public ResponseEntity<OrderResponse> assignOrder(
+            @Parameter(description = "ID del pedido que se va a asignar", required = true, example = "123")
+            @PathVariable Long orderId,
+
+            @Parameter(hidden = true)
+            @AuthenticationPrincipal AuthenticatedUser authenticatedUser
+    ) {
+        return ResponseEntity.ok(orderService.assignOrderToEmployee(orderId, authenticatedUser.getId()));
+    }
+
 }

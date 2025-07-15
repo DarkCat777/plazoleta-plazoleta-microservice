@@ -4,6 +4,7 @@ import com.pragma.plazoleta.application.dto.common.PaginationQuery;
 import com.pragma.plazoleta.application.dto.common.PaginationResult;
 import com.pragma.plazoleta.domain.exception.BusinessLogicException;
 import com.pragma.plazoleta.domain.exception.InvalidOwnerException;
+import com.pragma.plazoleta.domain.exception.OrderNotFoundException;
 import com.pragma.plazoleta.domain.model.*;
 import com.pragma.plazoleta.domain.spi.UserClientPort;
 import com.pragma.plazoleta.domain.spi.persistence.DishRepositoryPort;
@@ -11,6 +12,7 @@ import com.pragma.plazoleta.domain.spi.persistence.OrderRepositoryPort;
 import com.pragma.plazoleta.domain.spi.persistence.RestaurantRepositoryPort;
 import com.pragma.plazoleta.domain.validation.errors.impl.FieldError;
 import com.pragma.plazoleta.domain.validation.exception.ValidationException;
+import com.pragma.plazoleta.infrastructure.exception.UserNotFoundException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -181,4 +183,97 @@ class OrderUseCaseImplTest {
         assertTrue(((FieldError) exception.getErrors().get(0)).getField().contains("status"));
     }
 
+    @Test
+    void assignOrderToEmployee_success() {
+        Long orderId = 1L;
+        Long employeeId = 100L;
+        Long restaurantId = 10L;
+
+        Order order = Order.builder()
+                .id(orderId)
+                .status(OrderStatus.PENDING)
+                .restaurantId(restaurantId)
+                .build();
+
+        User employee = new User();
+        employee.setId(employeeId);
+        employee.setRestaurantId(restaurantId);
+
+        when(orderRepositoryPort.findById(orderId)).thenReturn(java.util.Optional.of(order));
+        when(userClientPort.getUserById(employeeId)).thenReturn(java.util.Optional.of(employee));
+        when(orderRepositoryPort.save(any())).thenAnswer(inv -> inv.getArgument(0));
+
+        Order result = orderUseCase.assignOrderToEmployee(orderId, employeeId);
+
+        assertEquals(OrderStatus.IN_PREPARATION, result.getStatus());
+        assertEquals(employeeId, result.getChefId());
+        verify(orderRepositoryPort).save(order);
+    }
+
+    @Test
+    void assignOrderToEmployee_shouldThrowWhenOrderNotFound() {
+        Long orderId = 1L;
+        Long employeeId = 100L;
+
+        when(orderRepositoryPort.findById(orderId)).thenReturn(java.util.Optional.empty());
+
+        assertThrows(OrderNotFoundException.class, () ->
+                orderUseCase.assignOrderToEmployee(orderId, employeeId));
+    }
+
+    @Test
+    void assignOrderToEmployee_shouldThrowWhenOrderIsNotPending() {
+        Long orderId = 1L;
+        Long employeeId = 100L;
+        Order order = Order.builder()
+                .id(orderId)
+                .status(OrderStatus.CANCELED)
+                .restaurantId(10L)
+                .build();
+
+        when(orderRepositoryPort.findById(orderId)).thenReturn(java.util.Optional.of(order));
+
+        assertThrows(BusinessLogicException.class, () ->
+                orderUseCase.assignOrderToEmployee(orderId, employeeId));
+    }
+
+    @Test
+    void assignOrderToEmployee_shouldThrowWhenEmployeeNotFound() {
+        Long orderId = 1L;
+        Long employeeId = 100L;
+
+        Order order = Order.builder()
+                .id(orderId)
+                .status(OrderStatus.PENDING)
+                .restaurantId(10L)
+                .build();
+
+        when(orderRepositoryPort.findById(orderId)).thenReturn(java.util.Optional.of(order));
+        when(userClientPort.getUserById(employeeId)).thenReturn(java.util.Optional.empty());
+
+        assertThrows(UserNotFoundException.class, () ->
+                orderUseCase.assignOrderToEmployee(orderId, employeeId));
+    }
+
+    @Test
+    void assignOrderToEmployee_shouldThrowWhenEmployeeFromOtherRestaurant() {
+        Long orderId = 1L;
+        Long employeeId = 100L;
+
+        Order order = Order.builder()
+                .id(orderId)
+                .status(OrderStatus.PENDING)
+                .restaurantId(10L)
+                .build();
+
+        User employee = new User();
+        employee.setId(employeeId);
+        employee.setRestaurantId(99L); // otro restaurante
+
+        when(orderRepositoryPort.findById(orderId)).thenReturn(java.util.Optional.of(order));
+        when(userClientPort.getUserById(employeeId)).thenReturn(java.util.Optional.of(employee));
+
+        assertThrows(BusinessLogicException.class, () ->
+                orderUseCase.assignOrderToEmployee(orderId, employeeId));
+    }
 }

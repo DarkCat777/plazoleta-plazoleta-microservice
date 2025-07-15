@@ -21,6 +21,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Component
@@ -70,5 +71,10 @@ public class OrderRepositoryAdapter implements OrderRepositoryPort {
         Pageable pageable = paginationQueryMapper.toPageable(paginationQuery);
         Page<Order> pagedOrders = jpaOrderRepository.findAllByRestaurant_IdAndStatus(restaurantId, status, pageable).map(orderEntityMapper::toDomain);
         return paginationResultMapper.toPaginatedResult(pagedOrders);
+    }
+
+    @Override
+    public Optional<Order> findById(Long orderId) {
+        return jpaOrderRepository.findById(orderId).map(orderEntityMapper::toDomain);
     }
 }

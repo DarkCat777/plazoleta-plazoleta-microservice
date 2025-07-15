@@ -3,10 +3,6 @@ package com.pragma.plazoleta.infrastructure.exceptionhandler;
 import com.pragma.plazoleta.application.dto.common.ErrorResponse;
 import com.pragma.plazoleta.application.dto.common.ValidationErrorResponse;
 import com.pragma.plazoleta.domain.exception.*;
-import com.pragma.plazoleta.domain.validation.errors.*;
-import com.pragma.plazoleta.domain.validation.errors.impl.CompositeError;
-import com.pragma.plazoleta.domain.validation.errors.impl.CompositeItemError;
-import com.pragma.plazoleta.domain.validation.errors.impl.FieldError;
 import com.pragma.plazoleta.domain.validation.exception.ValidationException;
 import com.pragma.plazoleta.infrastructure.exception.ExternalServiceException;
 import com.pragma.plazoleta.infrastructure.exception.UserNotFoundException;
@@ -19,8 +15,6 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import java.time.LocalDateTime;
-import java.util.*;
-import java.util.stream.Collectors;
 
 
 @Slf4j
@@ -75,6 +69,12 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponse> handleRestaurantNotFound(
             RestaurantNotFoundException ex, HttpServletRequest request) {
         return buildResponse(HttpStatus.NOT_FOUND, "Restaurante no encontrado", ex.getMessage(), request);
+    }
+
+    @ExceptionHandler(OrderNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleRestaurantNotFound(
+            OrderNotFoundException ex, HttpServletRequest request) {
+        return buildResponse(HttpStatus.NOT_FOUND, "Orden no encontrada", ex.getMessage(), request);
     }
 
     @ExceptionHandler(AuthorizationDeniedException.class)

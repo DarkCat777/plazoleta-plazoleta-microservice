@@ -11,4 +11,6 @@ public interface OrderService {
     OrderResponse createOrder(Long customerId, CreateOrderCommand command);
 
     Page<OrderResponse> getOrdersByStatusForEmployee(Long employeeId, OrderByStatusQuery query, Pageable pageable);
+
+    OrderResponse assignOrderToEmployee(Long orderId, Long employeeId);
 }
