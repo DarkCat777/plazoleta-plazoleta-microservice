@@ -18,4 +18,5 @@ public interface OrderResponseMapper {
     Order toDomain(CreateOrderCommand command);
 
     OrderResponse toResponse(Order order);
+
 }

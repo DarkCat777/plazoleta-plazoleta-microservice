@@ -2,24 +2,25 @@ package com.pragma.plazoleta.infrastructure.input.rest;
 
 import com.pragma.plazoleta.application.dto.common.ErrorResponse;
 import com.pragma.plazoleta.application.dto.request.CreateOrderCommand;
+import com.pragma.plazoleta.application.dto.request.OrderByStatusQuery;
 import com.pragma.plazoleta.application.dto.response.OrderResponse;
 import com.pragma.plazoleta.application.service.OrderService;
 import com.pragma.plazoleta.domain.model.AuthenticatedUser;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/v1/orders")
@@ -46,8 +47,33 @@ public class OrderController {
     @PostMapping
     public ResponseEntity<OrderResponse> createOrder(
             @AuthenticationPrincipal AuthenticatedUser authenticatedUser,
-            @Validated @RequestBody CreateOrderCommand command
+            @RequestBody CreateOrderCommand command
     ) {
         return ResponseEntity.status(HttpStatus.CREATED).body(orderService.createOrder(authenticatedUser.getId(), command));
+    }
+
+    @Operation(
+            summary = "Obtener pedidos por estado (solo para empleados)",
+            description = "Devuelve una lista paginada de pedidos filtrados por estado, solo del restaurante al que pertenece el empleado."
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Listado de pedidos obtenido exitosamente"),
+            @ApiResponse(responseCode = "400", description = "Parámetros inválidos"),
+            @ApiResponse(responseCode = "403", description = "Acceso denegado"),
+            @ApiResponse(responseCode = "500", description = "Error interno del servidor")
+    })
+    @PreAuthorize("hasRole('EMPLOYEE')")
+    @GetMapping("/employee")
+    public ResponseEntity<Page<OrderResponse>> getOrdersByStatus(
+            @Parameter(hidden = true)
+            @AuthenticationPrincipal AuthenticatedUser authenticatedUser,
+            @Parameter(description = "Filtro por estado del pedido", required = true)
+            @RequestBody OrderByStatusQuery query,
+            @Parameter(description = "Parámetros de paginación y ordenamiento: page, size, sort")
+            @PageableDefault Pageable pageable
+    ) {
+        return ResponseEntity.ok(
+                orderService.getOrdersByStatusForEmployee(authenticatedUser.getId(), query, pageable)
+        );
     }
 }

@@ -13,6 +13,7 @@ import lombok.RequiredArgsConstructor;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
@@ -173,6 +174,11 @@ public class Validation<T> {
 
         public Builder<T> notMatch(String field, Function<T, String> extractor, String pattern) {
             rules.add(new NotPatternRule<>(field, extractor, pattern));
+            return this;
+        }
+
+        public <V> Builder<T> in(String field, Function<T, V> extractor, Collection<V> validValues) {
+            rules.add(new InRule<>(field, extractor, validValues));
             return this;
         }
 

@@ -1,10 +1,11 @@
 package com.pragma.plazoleta.domain.usecase.impl;
 
+import com.pragma.plazoleta.application.dto.common.PaginationQuery;
+import com.pragma.plazoleta.application.dto.common.PaginationResult;
 import com.pragma.plazoleta.domain.exception.BusinessLogicException;
-import com.pragma.plazoleta.domain.model.Dish;
-import com.pragma.plazoleta.domain.model.Order;
-import com.pragma.plazoleta.domain.model.OrderDetail;
-import com.pragma.plazoleta.domain.model.OrderStatus;
+import com.pragma.plazoleta.domain.exception.InvalidOwnerException;
+import com.pragma.plazoleta.domain.model.*;
+import com.pragma.plazoleta.domain.spi.UserClientPort;
 import com.pragma.plazoleta.domain.spi.persistence.DishRepositoryPort;
 import com.pragma.plazoleta.domain.spi.persistence.OrderRepositoryPort;
 import com.pragma.plazoleta.domain.spi.persistence.RestaurantRepositoryPort;
@@ -13,6 +14,7 @@ import com.pragma.plazoleta.domain.validation.Validation;
 import lombok.RequiredArgsConstructor;
 
 import java.time.LocalDateTime;
+import java.util.Arrays;
 import java.util.List;
 
 import static com.pragma.plazoleta.domain.exception.BusinessLogicException.*;
@@ -20,6 +22,7 @@ import static com.pragma.plazoleta.domain.exception.BusinessLogicException.*;
 @RequiredArgsConstructor
 public class OrderUseCaseImpl implements OrderUseCase {
 
+    private final UserClientPort userClientPort;
     private final OrderRepositoryPort orderRepositoryPort;
     private final DishRepositoryPort dishRepositoryPort;
     private final RestaurantRepositoryPort restaurantRepositoryPort;
@@ -107,5 +110,26 @@ public class OrderUseCaseImpl implements OrderUseCase {
         order.setDishes(details);
 
         return orderRepositoryPort.save(order);
+    }
+
+    @Override
+    public PaginationResult<Order> findOrdersByStatusForEmployee(Long employeeId, String status, PaginationQuery paginationQuery) {
+        List<String> validStatus = Arrays.stream(OrderStatus.values()).map(Enum::name).toList();
+
+        Validation.builder(null)
+                .notNull("status", t -> status)
+                .notBlank("status", t -> status)
+                .in("status", t -> status, validStatus)
+                .build()
+                .validate();
+
+        User user = userClientPort.getUserById(employeeId)
+                .orElseThrow(() -> new InvalidOwnerException("No se ha encontrado el usuario propietario"));
+
+        if (user.getRestaurantId() == null) {
+            throw new InvalidOwnerException("El usuario propietario no tiene un restaurante");
+        }
+
+        return orderRepositoryPort.findByRestaurantIdAndStatus(user.getRestaurantId(), status, paginationQuery);
     }
 }

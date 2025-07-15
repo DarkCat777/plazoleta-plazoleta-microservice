@@ -1,10 +1,16 @@
 package com.pragma.plazoleta.domain.usecase.impl;
 
+import com.pragma.plazoleta.application.dto.common.PaginationQuery;
+import com.pragma.plazoleta.application.dto.common.PaginationResult;
 import com.pragma.plazoleta.domain.exception.BusinessLogicException;
+import com.pragma.plazoleta.domain.exception.InvalidOwnerException;
 import com.pragma.plazoleta.domain.model.*;
+import com.pragma.plazoleta.domain.spi.UserClientPort;
 import com.pragma.plazoleta.domain.spi.persistence.DishRepositoryPort;
 import com.pragma.plazoleta.domain.spi.persistence.OrderRepositoryPort;
 import com.pragma.plazoleta.domain.spi.persistence.RestaurantRepositoryPort;
+import com.pragma.plazoleta.domain.validation.errors.impl.FieldError;
+import com.pragma.plazoleta.domain.validation.exception.ValidationException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -16,6 +22,7 @@ import static org.mockito.Mockito.*;
 
 class OrderUseCaseImplTest {
 
+    private UserClientPort userClientPort;
     private OrderRepositoryPort orderRepositoryPort;
     private DishRepositoryPort dishRepositoryPort;
     private RestaurantRepositoryPort restaurantRepositoryPort;
@@ -23,10 +30,11 @@ class OrderUseCaseImplTest {
 
     @BeforeEach
     void setUp() {
+        userClientPort = mock(UserClientPort.class);
         orderRepositoryPort = mock(OrderRepositoryPort.class);
         dishRepositoryPort = mock(DishRepositoryPort.class);
         restaurantRepositoryPort = mock(RestaurantRepositoryPort.class);
-        orderUseCase = new OrderUseCaseImpl(orderRepositoryPort, dishRepositoryPort, restaurantRepositoryPort);
+        orderUseCase = new OrderUseCaseImpl(userClientPort, orderRepositoryPort, dishRepositoryPort, restaurantRepositoryPort);
     }
 
     @Test
@@ -104,4 +112,73 @@ class OrderUseCaseImplTest {
         BusinessLogicException ex = assertThrows(BusinessLogicException.class, () -> orderUseCase.createOrder(1L, order));
         assertEquals(PENDING_ORDER, ex.getMessage());
     }
+
+    @Test
+    void findOrdersByStatusForEmployee_success() {
+        Long employeeId = 100L;
+        String status = "PENDING";
+        Long restaurantId = 10L;
+
+        User user = new User();
+        user.setId(employeeId);
+        user.setRestaurantId(restaurantId);
+
+        PaginationQuery paginationQuery = PaginationQuery.of(0, 10);
+        PaginationResult<Order> expectedResult = new PaginationResult<>(List.of(), paginationQuery, 0L);
+
+        when(userClientPort.getUserById(employeeId)).thenReturn(java.util.Optional.of(user));
+        when(orderRepositoryPort.findByRestaurantIdAndStatus(restaurantId, status, paginationQuery)).thenReturn(expectedResult);
+
+        PaginationResult<Order> result = orderUseCase.findOrdersByStatusForEmployee(employeeId, status, paginationQuery);
+
+        assertNotNull(result);
+        assertEquals(expectedResult, result);
+        verify(userClientPort).getUserById(employeeId);
+        verify(orderRepositoryPort).findByRestaurantIdAndStatus(restaurantId, status, paginationQuery);
+    }
+
+    @Test
+    void findOrdersByStatusForEmployee_shouldThrowWhenUserNotFound() {
+        Long employeeId = 100L;
+        String status = "PENDING";
+        PaginationQuery paginationQuery = PaginationQuery.of(0, 10);
+
+        when(userClientPort.getUserById(employeeId)).thenReturn(java.util.Optional.empty());
+
+        Exception exception = assertThrows(InvalidOwnerException.class,
+                () -> orderUseCase.findOrdersByStatusForEmployee(employeeId, status, paginationQuery));
+
+        assertEquals("No se ha encontrado el usuario propietario", exception.getMessage());
+    }
+
+    @Test
+    void findOrdersByStatusForEmployee_shouldThrowWhenUserHasNoRestaurant() {
+        Long employeeId = 100L;
+        String status = "PENDING";
+        PaginationQuery paginationQuery = PaginationQuery.of(0, 10);
+
+        User user = new User();
+        user.setId(employeeId);
+        user.setRestaurantId(null);
+
+        when(userClientPort.getUserById(employeeId)).thenReturn(java.util.Optional.of(user));
+
+        Exception exception = assertThrows(InvalidOwnerException.class,
+                () -> orderUseCase.findOrdersByStatusForEmployee(employeeId, status, paginationQuery));
+
+        assertEquals("El usuario propietario no tiene un restaurante", exception.getMessage());
+    }
+
+    @Test
+    void findOrdersByStatusForEmployee_shouldThrowWhenInvalidStatus() {
+        Long employeeId = 100L;
+        String status = "INVALID_STATUS";
+        PaginationQuery paginationQuery = PaginationQuery.of(0, 10);
+
+        ValidationException exception = assertThrows(ValidationException.class,
+                () -> orderUseCase.findOrdersByStatusForEmployee(employeeId, status, paginationQuery));
+
+        assertTrue(((FieldError) exception.getErrors().get(0)).getField().contains("status"));
+    }
+
 }
