@@ -263,4 +263,48 @@ public class OrderUseCaseImpl implements OrderUseCase {
         return orderRepositoryPort.save(orderById);
     }
 
+    private void sendNotificationOfOrderInPreparation(Order order, User customer) {
+        try {
+            notificationClientPort.notifyOrderCantCancelled(
+                    new OrderCantCanceledNotification(
+                            order.getId(),
+                            order.getStatus(),
+                            customer.getPhoneNumber()
+                    )
+            );
+        } catch (Exception e) {
+            log.error("Error enviando notificación SMS para el pedido {}: {}", order.getId(), e.getMessage());
+        }
+    }
+
+    @Override
+    public Order markOrderAsCancelled(Long orderId, Long customerId) {
+        Validation.builder(null)
+                .notNull("orderId", t -> orderId)
+                .positive("orderId", (LongExtractor<Object>) t -> orderId)
+                .notNull("customerId", t -> customerId)
+                .positive("customerId", (LongExtractor<Object>) t -> customerId)
+                .build()
+                .validate();
+
+        Order orderById = orderRepositoryPort.findById(orderId)
+                .orElseThrow(() -> new OrderNotFoundException(orderId));
+
+        User customer = userClientPort.getUserById(customerId)
+                .orElseThrow(() -> new UserNotFoundException(customerId));
+
+        if (!Objects.equals(orderById.getCustomerId(), customer.getId())) {
+            throw new BusinessLogicException("No puedes cancelar un pedido que no es tuyo.");
+        }
+
+        if (orderById.getStatus() != OrderStatus.PENDING) {
+            sendNotificationOfOrderInPreparation(orderById, customer);
+            throw new BusinessLogicException("Solo se marcan como cancelados los pedidos que estén en estado pendiente.");
+        }
+
+        orderById.setStatus(OrderStatus.CANCELED);
+
+        return orderRepositoryPort.save(orderById);
+    }
+
 }

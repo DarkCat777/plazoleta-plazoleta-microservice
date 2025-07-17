@@ -7,12 +7,12 @@ import lombok.NoArgsConstructor;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class OrderNotificationRequest {
+public class OrderCantCanceledNotificationRequest {
 
     private Long orderId;
 
-    private String customerPhone;
+    private String orderStatus;
 
-    private String securityPin;
+    private String customerPhone;
 
 }

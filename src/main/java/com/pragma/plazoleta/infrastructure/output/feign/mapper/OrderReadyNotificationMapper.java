@@ -1,13 +1,13 @@
 package com.pragma.plazoleta.infrastructure.output.feign.mapper;
 
 import com.pragma.plazoleta.domain.model.OrderReadyNotification;
-import com.pragma.plazoleta.infrastructure.output.feign.model.OrderNotificationRequest;
+import com.pragma.plazoleta.infrastructure.output.feign.model.OrderReadyNotificationRequest;
 import org.mapstruct.Mapper;
 import org.mapstruct.MappingConstants;
 
 @Mapper(componentModel = MappingConstants.ComponentModel.SPRING)
-public interface NotificationMapper {
+public interface OrderReadyNotificationMapper {
 
-    OrderNotificationRequest toRequest(OrderReadyNotification orderReadyNotification);
+    OrderReadyNotificationRequest toRequest(OrderReadyNotification orderReadyNotification);
 
 }

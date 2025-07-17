@@ -160,4 +160,26 @@ public class OrderController {
         return ResponseEntity.ok(orderService.markOrderAsDelivered(orderId, authenticatedUser.getId(), query));
     }
 
+    @Operation(
+            summary = "Cancelar un pedido",
+            description = "Permite que un cliente cancele su pedido únicamente si este se encuentra en estado 'PENDIENTE'. "
+                    + "Si el pedido ya está en preparación o en otro estado, se le notificará al cliente que no puede cancelarse."
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Pedido cancelado exitosamente", content = @Content(schema = @Schema(implementation = OrderResponse.class))),
+            @ApiResponse(responseCode = "400", description = "No se puede cancelar el pedido (estado no permitido o error de negocio)", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "401", description = "No autorizado - El cliente no está autenticado"),
+            @ApiResponse(responseCode = "403", description = "Prohibido - Solo clientes pueden cancelar pedidos"),
+            @ApiResponse(responseCode = "404", description = "Pedido no encontrado", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    })
+    @PreAuthorize("hasRole('CUSTOMER')")
+    @PatchMapping("/{orderId}/mark-as-cancelled")
+    public ResponseEntity<OrderResponse> markOrderAsCancelled(
+            @Parameter(hidden = true) @AuthenticationPrincipal AuthenticatedUser authenticatedUser,
+            @Parameter(description = "ID del pedido que se va a marcar como cancelado", required = true, example = "123")
+            @PathVariable Long orderId
+    ) {
+        return ResponseEntity.ok(orderService.markOrderAsCancelled(orderId, authenticatedUser.getId()));
+    }
+
 }

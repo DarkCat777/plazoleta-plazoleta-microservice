@@ -1,9 +1,11 @@
 package com.pragma.plazoleta.infrastructure.output.feign.adapter;
 
+import com.pragma.plazoleta.domain.model.OrderCantCanceledNotification;
 import com.pragma.plazoleta.domain.model.OrderReadyNotification;
 import com.pragma.plazoleta.domain.spi.NotificationClientPort;
 import com.pragma.plazoleta.infrastructure.output.feign.client.NotificationFeignClient;
-import com.pragma.plazoleta.infrastructure.output.feign.mapper.NotificationMapper;
+import com.pragma.plazoleta.infrastructure.output.feign.mapper.OrderCantCanceledNotificationMapper;
+import com.pragma.plazoleta.infrastructure.output.feign.mapper.OrderReadyNotificationMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -12,10 +14,16 @@ import org.springframework.stereotype.Component;
 public class NotificationClientAdapter implements NotificationClientPort {
 
     private final NotificationFeignClient notificationFeignClient;
-    private final NotificationMapper notificationMapper;
+    private final OrderReadyNotificationMapper orderReadyNotificationMapper;
+    private final OrderCantCanceledNotificationMapper orderCantCanceledNotificationMapper;
 
     @Override
     public void notifyOrderReady(OrderReadyNotification orderReadyNotification) {
-        notificationFeignClient.notifyOrderReady(notificationMapper.toRequest(orderReadyNotification));
+        notificationFeignClient.notifyOrderReady(orderReadyNotificationMapper.toRequest(orderReadyNotification));
+    }
+
+    @Override
+    public void notifyOrderCantCancelled(OrderCantCanceledNotification orderCantCanceledNotification) {
+        notificationFeignClient.notifyOrderCantCanceled(orderCantCanceledNotificationMapper.toRequest(orderCantCanceledNotification));
     }
 }

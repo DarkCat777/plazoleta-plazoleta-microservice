@@ -473,4 +473,92 @@ class OrderUseCaseImplTest {
                 () -> orderUseCase.markOrderAsDelivered(orderId, employeeId, "1234"));
         assertTrue(ex.getMessage().contains("entregado"));
     }
+
+    @Test
+    void markOrderAsCancelled_success() {
+        Long orderId = 1L;
+        Long customerId = 50L;
+
+        Order order = Order.builder()
+                .id(orderId)
+                .status(OrderStatus.PENDING)
+                .customerId(customerId)
+                .build();
+
+        User customer = new User();
+        customer.setId(customerId);
+
+        when(orderRepositoryPort.findById(orderId)).thenReturn(java.util.Optional.of(order));
+        when(userClientPort.getUserById(customerId)).thenReturn(java.util.Optional.of(customer));
+        when(orderRepositoryPort.save(any(Order.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        Order result = orderUseCase.markOrderAsCancelled(orderId, customerId);
+
+        assertEquals(OrderStatus.CANCELED, result.getStatus());
+        verify(orderRepositoryPort).save(order);
+        // No se debe notificar
+        verify(notificationClientPort, never()).notifyOrderCantCancelled(any());
+    }
+
+    @Test
+    void markOrderAsCancelled_notPending_sendsNotificationAndThrows() {
+        Long orderId = 1L;
+        Long customerId = 50L;
+
+        Order order = Order.builder()
+                .id(orderId)
+                .status(OrderStatus.IN_PREPARATION) // <- clave
+                .customerId(customerId)
+                .build();
+
+        User customer = new User();
+        customer.setId(customerId);
+        customer.setPhoneNumber("+51987654321");
+
+        when(orderRepositoryPort.findById(orderId)).thenReturn(java.util.Optional.of(order));
+        when(userClientPort.getUserById(customerId)).thenReturn(java.util.Optional.of(customer));
+
+        BusinessLogicException ex = assertThrows(BusinessLogicException.class,
+                () -> orderUseCase.markOrderAsCancelled(orderId, customerId));
+        assertTrue(ex.getMessage().contains("Solo se marcan")); // ajusta al mensaje final
+
+        // Capturamos la notificación
+        ArgumentCaptor<OrderCantCanceledNotification> captor = ArgumentCaptor.forClass(OrderCantCanceledNotification.class);
+        verify(notificationClientPort).notifyOrderCantCancelled(captor.capture());
+
+        OrderCantCanceledNotification sent = captor.getValue();
+        assertEquals(orderId, sent.getOrderId());
+        assertEquals(OrderStatus.IN_PREPARATION, sent.getOrderStatus());
+        assertEquals("+51987654321", sent.getCustomerPhone());
+    }
+
+    @Test
+    void markOrderAsCancelled_notPending_notificationFailsStillThrows() {
+        Long orderId = 1L;
+        Long customerId = 50L;
+
+        Order order = Order.builder()
+                .id(orderId)
+                .status(OrderStatus.READY)
+                .customerId(customerId)
+                .build();
+
+        User customer = new User();
+        customer.setId(customerId);
+        customer.setPhoneNumber("+51900000000");
+
+        when(orderRepositoryPort.findById(orderId)).thenReturn(java.util.Optional.of(order));
+        when(userClientPort.getUserById(customerId)).thenReturn(java.util.Optional.of(customer));
+        doThrow(new RuntimeException("Twilio fail"))
+                .when(notificationClientPort).notifyOrderCantCancelled(any());
+
+        BusinessLogicException ex = assertThrows(BusinessLogicException.class,
+                () -> orderUseCase.markOrderAsCancelled(orderId, customerId));
+        assertTrue(ex.getMessage().contains("Solo se marcan")); // mensaje esperado
+
+        // Se intentó notificar aunque falló
+        verify(notificationClientPort).notifyOrderCantCancelled(any());
+    }
+
+
 }

@@ -54,4 +54,9 @@ public class OrderServiceImpl implements OrderService {
     public OrderResponse markOrderAsDelivered(Long orderId, Long employeeId, OrderSecurityPinQuery query) {
         return orderResponseMapper.toResponse(orderUseCase.markOrderAsDelivered(orderId, employeeId, query.getSecurityPin()));
     }
+
+    @Override
+    public OrderResponse markOrderAsCancelled(Long orderId, Long customerId) {
+        return orderResponseMapper.toResponse(orderUseCase.markOrderAsCancelled(orderId, customerId));
+    }
 }

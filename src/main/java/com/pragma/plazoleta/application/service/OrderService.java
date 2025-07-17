@@ -18,4 +18,6 @@ public interface OrderService {
     OrderResponse markOrderAsReady(Long orderId, Long employeeId);
 
     OrderResponse markOrderAsDelivered(Long orderId, Long employeeId, OrderSecurityPinQuery query);
+
+    OrderResponse markOrderAsCancelled(Long orderId, Long customerId);
 }
