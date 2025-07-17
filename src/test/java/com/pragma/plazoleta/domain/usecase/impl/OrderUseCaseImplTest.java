@@ -352,4 +352,125 @@ class OrderUseCaseImplTest {
             fail("Error invoking private method: " + e.getMessage());
         }
     }
+
+    @Test
+    void markOrderAsDelivered_success() {
+        Long orderId = 1L;
+        Long employeeId = 100L;
+        String pin = "1234";
+
+        Order order = Order.builder()
+                .id(orderId)
+                .status(OrderStatus.READY)
+                .chefId(employeeId)
+                .securityPin(pin)
+                .build();
+
+        User employee = new User();
+        employee.setId(employeeId);
+
+        when(orderRepositoryPort.findById(orderId)).thenReturn(java.util.Optional.of(order));
+        when(userClientPort.getUserById(employeeId)).thenReturn(java.util.Optional.of(employee));
+        when(orderRepositoryPort.save(any(Order.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        Order result = orderUseCase.markOrderAsDelivered(orderId, employeeId, pin);
+
+        assertEquals(OrderStatus.DELIVERED, result.getStatus());
+        verify(orderRepositoryPort).save(order);
+    }
+
+    @Test
+    void markOrderAsDelivered_shouldThrowWhenOrderNotFound() {
+        Long orderId = 1L;
+        Long employeeId = 100L;
+
+        when(orderRepositoryPort.findById(orderId)).thenReturn(java.util.Optional.empty());
+
+        assertThrows(OrderNotFoundException.class,
+                () -> orderUseCase.markOrderAsDelivered(orderId, employeeId, "1234"));
+    }
+
+    @Test
+    void markOrderAsDelivered_shouldThrowWhenOrderNotReady() {
+        Long orderId = 1L;
+        Long employeeId = 100L;
+
+        Order order = Order.builder()
+                .id(orderId)
+                .status(OrderStatus.IN_PREPARATION) // no READY
+                .build();
+
+        when(orderRepositoryPort.findById(orderId)).thenReturn(java.util.Optional.of(order));
+
+        BusinessLogicException ex = assertThrows(BusinessLogicException.class,
+                () -> orderUseCase.markOrderAsDelivered(orderId, employeeId, "1234"));
+        assertTrue(ex.getMessage().contains("Solo se marcar"));
+    }
+
+    @Test
+    void markOrderAsDelivered_shouldThrowWhenInvalidPin() {
+        Long orderId = 1L;
+        Long employeeId = 100L;
+
+        Order order = Order.builder()
+                .id(orderId)
+                .status(OrderStatus.READY)
+                .chefId(employeeId)
+                .securityPin("1234") // real
+                .build();
+
+        User employee = new User();
+        employee.setId(employeeId);
+
+        when(orderRepositoryPort.findById(orderId)).thenReturn(java.util.Optional.of(order));
+        when(userClientPort.getUserById(employeeId)).thenReturn(java.util.Optional.of(employee));
+
+        BusinessLogicException ex = assertThrows(BusinessLogicException.class,
+                () -> orderUseCase.markOrderAsDelivered(orderId, employeeId, "9999")); // distinto
+        assertTrue(ex.getMessage().contains("pin"));
+    }
+
+    @Test
+    void markOrderAsDelivered_shouldThrowWhenEmployeeNotFound() {
+        Long orderId = 1L;
+        Long employeeId = 100L;
+        String pin = "1234";
+
+        Order order = Order.builder()
+                .id(orderId)
+                .status(OrderStatus.READY)
+                .chefId(employeeId)
+                .securityPin(pin)
+                .build();
+
+        when(orderRepositoryPort.findById(orderId)).thenReturn(java.util.Optional.of(order));
+        when(userClientPort.getUserById(employeeId)).thenReturn(java.util.Optional.empty());
+
+        assertThrows(UserNotFoundException.class,
+                () -> orderUseCase.markOrderAsDelivered(orderId, employeeId, pin));
+    }
+
+    @Test
+    void markOrderAsDelivered_shouldThrowWhenEmployeeMismatch() {
+        Long orderId = 1L;
+        Long employeeId = 100L;      // quien intenta marcar
+        Long otherChefId = 200L;     // quien preparó
+
+        Order order = Order.builder()
+                .id(orderId)
+                .status(OrderStatus.READY)
+                .chefId(otherChefId) // diferente
+                .securityPin("1234")
+                .build();
+
+        User employee = new User();
+        employee.setId(employeeId);
+
+        when(orderRepositoryPort.findById(orderId)).thenReturn(java.util.Optional.of(order));
+        when(userClientPort.getUserById(employeeId)).thenReturn(java.util.Optional.of(employee));
+
+        BusinessLogicException ex = assertThrows(BusinessLogicException.class,
+                () -> orderUseCase.markOrderAsDelivered(orderId, employeeId, "1234"));
+        assertTrue(ex.getMessage().contains("entregado"));
+    }
 }

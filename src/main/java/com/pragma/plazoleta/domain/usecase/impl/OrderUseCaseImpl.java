@@ -227,4 +227,40 @@ public class OrderUseCaseImpl implements OrderUseCase {
 
         return updatedOrder;
     }
+
+    @Override
+    public Order markOrderAsDelivered(Long orderId, Long employeeId, String securityPin) {
+        Validation.builder(null)
+                .notNull("orderId", t -> orderId)
+                .positive("orderId", (LongExtractor<Object>) t -> orderId)
+                .notNull("employeeId", t -> employeeId)
+                .positive("employeeId", (LongExtractor<Object>) t -> employeeId)
+                .notNull("securityPin", t -> securityPin)
+                .notBlank("securityPin", t -> securityPin)
+                .build()
+                .validate();
+
+        Order orderById = orderRepositoryPort.findById(orderId)
+                .orElseThrow(() -> new OrderNotFoundException(orderId));
+
+        if (orderById.getStatus() != OrderStatus.READY) {
+            throw new BusinessLogicException("Solo se marcar como listos pedidos en preparación.");
+        }
+
+        if (!orderById.getSecurityPin().equals(securityPin)) {
+            throw new BusinessLogicException("El pin de seguridad es invalido.");
+        }
+
+        User employee = userClientPort.getUserById(employeeId)
+                .orElseThrow(() -> new UserNotFoundException(employeeId));
+
+        if (!Objects.equals(orderById.getChefId(), employee.getId())) {
+            throw new BusinessLogicException("No puedes marcar como entregado el pedido que otro empleado esta atendiendo.");
+        }
+
+        orderById.setStatus(OrderStatus.DELIVERED);
+
+        return orderRepositoryPort.save(orderById);
+    }
+
 }

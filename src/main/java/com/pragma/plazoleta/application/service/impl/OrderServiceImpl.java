@@ -4,6 +4,7 @@ import com.pragma.plazoleta.application.dto.common.PaginationQuery;
 import com.pragma.plazoleta.application.dto.common.PaginationResult;
 import com.pragma.plazoleta.application.dto.request.CreateOrderCommand;
 import com.pragma.plazoleta.application.dto.request.OrderByStatusQuery;
+import com.pragma.plazoleta.application.dto.request.OrderSecurityPinQuery;
 import com.pragma.plazoleta.application.dto.response.OrderResponse;
 import com.pragma.plazoleta.application.mapper.OrderResponseMapper;
 import com.pragma.plazoleta.application.mapper.PaginationQueryMapper;
@@ -47,5 +48,10 @@ public class OrderServiceImpl implements OrderService {
     @Override
     public OrderResponse markOrderAsReady(Long orderId, Long employeeId) {
         return orderResponseMapper.toResponse(orderUseCase.markOrderAsReady(orderId, employeeId));
+    }
+
+    @Override
+    public OrderResponse markOrderAsDelivered(Long orderId, Long employeeId, OrderSecurityPinQuery query) {
+        return orderResponseMapper.toResponse(orderUseCase.markOrderAsDelivered(orderId, employeeId, query.getSecurityPin()));
     }
 }

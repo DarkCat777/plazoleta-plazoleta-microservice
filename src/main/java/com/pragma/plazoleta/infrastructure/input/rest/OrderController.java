@@ -3,6 +3,7 @@ package com.pragma.plazoleta.infrastructure.input.rest;
 import com.pragma.plazoleta.application.dto.common.ErrorResponse;
 import com.pragma.plazoleta.application.dto.request.CreateOrderCommand;
 import com.pragma.plazoleta.application.dto.request.OrderByStatusQuery;
+import com.pragma.plazoleta.application.dto.request.OrderSecurityPinQuery;
 import com.pragma.plazoleta.application.dto.response.OrderResponse;
 import com.pragma.plazoleta.application.service.OrderService;
 import com.pragma.plazoleta.domain.model.AuthenticatedUser;
@@ -125,6 +126,38 @@ public class OrderController {
             @Parameter(hidden = true) @AuthenticationPrincipal AuthenticatedUser authenticatedUser
     ) {
         return ResponseEntity.ok(orderService.markOrderAsReady(orderId, authenticatedUser.getId()));
+    }
+
+    @Operation(
+            summary = "Marcar pedido como entregado",
+            description = """
+                    Marca un pedido previamente *READY* como *DELIVERED* luego de validar:
+                    - Que el pedido exista.
+                    - Que el pedido esté en estado READY.
+                    - Que el PIN de seguridad enviado coincida con el generado al marcar READY.
+                    - Que el empleado autenticado sea el mismo que atendió/preparó el pedido (chef asignado).
+                    """,
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "Pedido marcado como entregado.",
+                            content = @Content(schema = @Schema(implementation = OrderResponse.class))),
+                    @ApiResponse(responseCode = "400", description = "Error de validación o reglas de negocio (estado inválido, PIN incorrecto, empleado no autorizado para este pedido).",
+                            content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+                    @ApiResponse(responseCode = "404", description = "Pedido o empleado no encontrado.",
+                            content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+                    @ApiResponse(responseCode = "403", description = "Acceso denegado (el token no tiene rol EMPLOYEE)."),
+                    @ApiResponse(responseCode = "500", description = "Error interno del servidor.",
+                            content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+            }
+    )
+    @PreAuthorize("hasRole('EMPLOYEE')")
+    @PatchMapping("/{orderId}/mark-as-delivered")
+    public ResponseEntity<OrderResponse> markOrderAsDelivered(
+            @Parameter(hidden = true) @AuthenticationPrincipal AuthenticatedUser authenticatedUser,
+            @Parameter(description = "ID del pedido que se va a marcar como entregado", required = true, example = "123")
+            @PathVariable Long orderId,
+            @RequestBody OrderSecurityPinQuery query
+    ) {
+        return ResponseEntity.ok(orderService.markOrderAsDelivered(orderId, authenticatedUser.getId(), query));
     }
 
 }

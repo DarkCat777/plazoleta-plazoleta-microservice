@@ -12,4 +12,6 @@ public interface OrderUseCase {
     Order assignOrderToEmployee(Long orderId, Long employeeId);
 
     Order markOrderAsReady(Long orderId, Long employeeId);
+
+    Order markOrderAsDelivered(Long orderId, Long employeeId, String securityPin);
 }
