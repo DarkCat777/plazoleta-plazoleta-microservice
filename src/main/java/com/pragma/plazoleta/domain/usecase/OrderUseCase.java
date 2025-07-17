@@ -10,4 +10,6 @@ public interface OrderUseCase {
     PaginationResult<Order> findOrdersByStatusForEmployee(Long employeeId, String status, PaginationQuery paginationQuery);
 
     Order assignOrderToEmployee(Long orderId, Long employeeId);
+
+    Order markOrderAsReady(Long orderId, Long employeeId);
 }

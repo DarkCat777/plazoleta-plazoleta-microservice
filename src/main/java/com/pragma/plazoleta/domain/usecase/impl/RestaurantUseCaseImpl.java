@@ -3,6 +3,7 @@ package com.pragma.plazoleta.domain.usecase.impl;
 import com.pragma.plazoleta.application.dto.common.PaginationQuery;
 import com.pragma.plazoleta.application.dto.common.PaginationResult;
 import com.pragma.plazoleta.domain.exception.BusinessLogicException;
+import com.pragma.plazoleta.domain.exception.RestaurantNotFoundException;
 import com.pragma.plazoleta.domain.model.Restaurant;
 import com.pragma.plazoleta.domain.spi.OwnerValidatorPort;
 import com.pragma.plazoleta.domain.spi.persistence.RestaurantRepositoryPort;
@@ -10,6 +11,8 @@ import com.pragma.plazoleta.domain.usecase.RestaurantUseCase;
 import com.pragma.plazoleta.domain.validation.Validation;
 import com.pragma.plazoleta.domain.validation.exception.ValidationException;
 import lombok.RequiredArgsConstructor;
+
+import static com.pragma.plazoleta.domain.exception.RestaurantNotFoundException.OWNER_DONT_HAVE_RESTAURANT;
 
 
 @RequiredArgsConstructor
@@ -66,6 +69,6 @@ public class RestaurantUseCaseImpl implements RestaurantUseCase {
     @Override
     public Restaurant findByOwnerId(Long ownerId) {
         return restaurantRepositoryPort.findByOwnerId(ownerId)
-                .orElseThrow(() -> new BusinessLogicException("El propietario no tiene un restaurante."));
+                .orElseThrow(() -> new RestaurantNotFoundException(OWNER_DONT_HAVE_RESTAURANT));
     }
 }

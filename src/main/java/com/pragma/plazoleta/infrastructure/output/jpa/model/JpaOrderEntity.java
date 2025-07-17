@@ -31,6 +31,9 @@ public class JpaOrderEntity {
     @Column(name = "estado", nullable = false)
     private String status;
 
+    @Column(name = "codigo_seguridad")
+    private String securityPin;
+
     @Column(name = "fecha", nullable = false)
     private LocalDateTime createdAt;
 

@@ -43,4 +43,9 @@ public class OrderServiceImpl implements OrderService {
     public OrderResponse assignOrderToEmployee(Long orderId, Long employeeId) {
         return orderResponseMapper.toResponse(orderUseCase.assignOrderToEmployee(orderId, employeeId));
     }
+
+    @Override
+    public OrderResponse markOrderAsReady(Long orderId, Long employeeId) {
+        return orderResponseMapper.toResponse(orderUseCase.markOrderAsReady(orderId, employeeId));
+    }
 }

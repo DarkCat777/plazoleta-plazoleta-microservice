@@ -13,4 +13,6 @@ public interface OrderService {
     Page<OrderResponse> getOrdersByStatusForEmployee(Long employeeId, OrderByStatusQuery query, Pageable pageable);
 
     OrderResponse assignOrderToEmployee(Long orderId, Long employeeId);
+
+    OrderResponse markOrderAsReady(Long orderId, Long employeeId);
 }

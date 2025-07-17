@@ -15,6 +15,7 @@ public interface OrderResponseMapper {
     @Mapping(target = "createdAt", ignore = true) // Se le asignara cuando ni bien se validen los datos
     @Mapping(target = "status", ignore = true) // Se le asigna uno por defecto cuando se crea
     @Mapping(target = "chefId", ignore = true) // Se le asignará uno cuando cambie de estado
+    @Mapping(target = "securityPin", ignore = true) // Se le asignará cuando la orden cambie estado listo.
     Order toDomain(CreateOrderCommand command);
 
     OrderResponse toResponse(Order order);

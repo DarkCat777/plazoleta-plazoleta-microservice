@@ -6,6 +6,7 @@ import com.pragma.plazoleta.domain.exception.BusinessLogicException;
 import com.pragma.plazoleta.domain.exception.InvalidOwnerException;
 import com.pragma.plazoleta.domain.exception.OrderNotFoundException;
 import com.pragma.plazoleta.domain.model.*;
+import com.pragma.plazoleta.domain.spi.NotificationClientPort;
 import com.pragma.plazoleta.domain.spi.UserClientPort;
 import com.pragma.plazoleta.domain.spi.persistence.DishRepositoryPort;
 import com.pragma.plazoleta.domain.spi.persistence.OrderRepositoryPort;
@@ -15,6 +16,7 @@ import com.pragma.plazoleta.domain.validation.exception.ValidationException;
 import com.pragma.plazoleta.infrastructure.exception.UserNotFoundException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 
 import java.util.List;
 
@@ -25,6 +27,7 @@ import static org.mockito.Mockito.*;
 class OrderUseCaseImplTest {
 
     private UserClientPort userClientPort;
+    private NotificationClientPort notificationClientPort;
     private OrderRepositoryPort orderRepositoryPort;
     private DishRepositoryPort dishRepositoryPort;
     private RestaurantRepositoryPort restaurantRepositoryPort;
@@ -33,10 +36,11 @@ class OrderUseCaseImplTest {
     @BeforeEach
     void setUp() {
         userClientPort = mock(UserClientPort.class);
+        notificationClientPort = mock(NotificationClientPort.class);
         orderRepositoryPort = mock(OrderRepositoryPort.class);
         dishRepositoryPort = mock(DishRepositoryPort.class);
         restaurantRepositoryPort = mock(RestaurantRepositoryPort.class);
-        orderUseCase = new OrderUseCaseImpl(userClientPort, orderRepositoryPort, dishRepositoryPort, restaurantRepositoryPort);
+        orderUseCase = new OrderUseCaseImpl(userClientPort, notificationClientPort, orderRepositoryPort, dishRepositoryPort, restaurantRepositoryPort);
     }
 
     @Test
@@ -275,5 +279,77 @@ class OrderUseCaseImplTest {
 
         assertThrows(BusinessLogicException.class, () ->
                 orderUseCase.assignOrderToEmployee(orderId, employeeId));
+    }
+
+    @Test
+    void sendNotificationOfOrderReady_success() {
+        Order order = Order.builder()
+                .id(1L)
+                .customerId(50L)
+                .securityPin("1234")
+                .build();
+
+        User customer = new User();
+        customer.setId(50L);
+        customer.setPhoneNumber("+51987654321");
+
+        when(userClientPort.getUserById(50L)).thenReturn(java.util.Optional.of(customer));
+
+        // Ejecutar método privado mediante reflexión o a través de markOrderAsReady
+        orderUseCaseTestHelperInvokeSendNotification(order);
+
+        // Capturar el argumento
+        ArgumentCaptor<OrderReadyNotification> captor = ArgumentCaptor.forClass(OrderReadyNotification.class);
+        verify(notificationClientPort).notifyOrderReady(captor.capture());
+
+        OrderReadyNotification sentNotification = captor.getValue();
+        assertEquals(1L, sentNotification.getOrderId());
+        assertEquals("+51987654321", sentNotification.getCustomerPhone());
+        assertEquals("1234", sentNotification.getSecurityPin());
+    }
+
+    @Test
+    void sendNotificationOfOrderReady_shouldHandleUserNotFound() {
+        Order order = Order.builder().id(1L).customerId(99L).build();
+
+        when(userClientPort.getUserById(99L)).thenReturn(java.util.Optional.empty());
+
+        orderUseCaseTestHelperInvokeSendNotification(order);
+
+        verify(notificationClientPort, never()).notifyOrderReady(any());
+    }
+
+    @Test
+    void sendNotificationOfOrderReady_shouldHandleNotificationFailure() {
+        Order order = Order.builder()
+                .id(1L)
+                .customerId(50L)
+                .securityPin("1234")
+                .build();
+
+        User customer = new User();
+        customer.setId(50L);
+        customer.setPhoneNumber("+51987654321");
+
+        when(userClientPort.getUserById(50L)).thenReturn(java.util.Optional.of(customer));
+        doThrow(new RuntimeException("Notification error"))
+                .when(notificationClientPort).notifyOrderReady(any());
+
+        orderUseCaseTestHelperInvokeSendNotification(order);
+
+        verify(notificationClientPort).notifyOrderReady(any());
+        // No debe lanzar excepción
+    }
+
+    // Método auxiliar para invocar el método privado usando reflexión
+    private void orderUseCaseTestHelperInvokeSendNotification(Order order) {
+        try {
+            java.lang.reflect.Method method = OrderUseCaseImpl.class
+                    .getDeclaredMethod("sendNotificationOfOrderReady", Order.class);
+            method.setAccessible(true);
+            method.invoke(orderUseCase, order);
+        } catch (Exception e) {
+            fail("Error invoking private method: " + e.getMessage());
+        }
     }
 }

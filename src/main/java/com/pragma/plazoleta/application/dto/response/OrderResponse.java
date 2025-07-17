@@ -20,6 +20,8 @@ public class OrderResponse {
 
     private String status;
 
+    private String securityPin;
+
     private LocalDateTime createdAt;
 
     private Long restaurantId;

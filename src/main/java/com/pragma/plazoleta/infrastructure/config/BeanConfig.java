@@ -1,5 +1,6 @@
 package com.pragma.plazoleta.infrastructure.config;
 
+import com.pragma.plazoleta.domain.spi.NotificationClientPort;
 import com.pragma.plazoleta.domain.spi.OwnerValidatorPort;
 import com.pragma.plazoleta.domain.spi.UserClientPort;
 import com.pragma.plazoleta.domain.spi.persistence.CategoryRepositoryPort;
@@ -48,12 +49,14 @@ public class BeanConfig {
     @Bean
     public OrderUseCase createOrderUseCase(
             UserClientPort userClientPort,
+            NotificationClientPort notificationClientPort,
             OrderRepositoryPort orderRepositoryPort,
             DishRepositoryPort dishRepositoryPort,
             RestaurantRepositoryPort restaurantRepositoryPort
     ) {
         return new OrderUseCaseImpl(
                 userClientPort,
+                notificationClientPort,
                 orderRepositoryPort,
                 dishRepositoryPort,
                 restaurantRepositoryPort

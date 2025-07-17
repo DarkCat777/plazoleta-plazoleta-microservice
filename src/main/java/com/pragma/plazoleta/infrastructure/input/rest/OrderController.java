@@ -102,4 +102,29 @@ public class OrderController {
         return ResponseEntity.ok(orderService.assignOrderToEmployee(orderId, authenticatedUser.getId()));
     }
 
+
+    @Operation(
+            summary = "Marcar pedido como listo",
+            description = "Permite que un empleado marque un pedido en estado `IN_PREPARATION` como `READY`. Genera un PIN de seguridad y notifica al cliente vía SMS.",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "Pedido marcado como listo",
+                            content = @Content(schema = @Schema(implementation = OrderResponse.class))),
+                    @ApiResponse(responseCode = "400", description = "Reglas de negocio incumplidas",
+                            content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+                    @ApiResponse(responseCode = "404", description = "Pedido no encontrado",
+                            content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+                    @ApiResponse(responseCode = "403", description = "Acceso denegado"),
+                    @ApiResponse(responseCode = "500", description = "Error interno del servidor")
+            }
+    )
+    @PreAuthorize("hasRole('EMPLOYEE')")
+    @PatchMapping("/{orderId}/mark-as-ready")
+    public ResponseEntity<OrderResponse> markOrderAsReady(
+            @Parameter(description = "ID del pedido que se va a marcar como listo", required = true, example = "123")
+            @PathVariable Long orderId,
+            @Parameter(hidden = true) @AuthenticationPrincipal AuthenticatedUser authenticatedUser
+    ) {
+        return ResponseEntity.ok(orderService.markOrderAsReady(orderId, authenticatedUser.getId()));
+    }
+
 }

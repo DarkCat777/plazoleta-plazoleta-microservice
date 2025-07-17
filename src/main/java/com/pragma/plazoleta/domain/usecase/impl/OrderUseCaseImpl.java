@@ -6,6 +6,7 @@ import com.pragma.plazoleta.domain.exception.BusinessLogicException;
 import com.pragma.plazoleta.domain.exception.InvalidOwnerException;
 import com.pragma.plazoleta.domain.exception.OrderNotFoundException;
 import com.pragma.plazoleta.domain.model.*;
+import com.pragma.plazoleta.domain.spi.NotificationClientPort;
 import com.pragma.plazoleta.domain.spi.UserClientPort;
 import com.pragma.plazoleta.domain.spi.persistence.DishRepositoryPort;
 import com.pragma.plazoleta.domain.spi.persistence.OrderRepositoryPort;
@@ -15,7 +16,9 @@ import com.pragma.plazoleta.domain.validation.Validation;
 import com.pragma.plazoleta.domain.validation.rules.extractor.LongExtractor;
 import com.pragma.plazoleta.infrastructure.exception.UserNotFoundException;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.log4j.Log4j2;
 
+import java.security.SecureRandom;
 import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.List;
@@ -23,10 +26,12 @@ import java.util.Objects;
 
 import static com.pragma.plazoleta.domain.exception.BusinessLogicException.*;
 
+@Log4j2
 @RequiredArgsConstructor
 public class OrderUseCaseImpl implements OrderUseCase {
 
     private final UserClientPort userClientPort;
+    private final NotificationClientPort notificationClientPort;
     private final OrderRepositoryPort orderRepositoryPort;
     private final DishRepositoryPort dishRepositoryPort;
     private final RestaurantRepositoryPort restaurantRepositoryPort;
@@ -137,8 +142,7 @@ public class OrderUseCaseImpl implements OrderUseCase {
         return orderRepositoryPort.findByRestaurantIdAndStatus(user.getRestaurantId(), status, paginationQuery);
     }
 
-    @Override
-    public Order assignOrderToEmployee(Long orderId, Long employeeId) {
+    private void validateChangeStatusOrder(Long orderId, Long employeeId) {
         Validation.builder(null)
                 .notNull("orderId", t -> orderId)
                 .positive("orderId", (LongExtractor<Object>) t -> orderId)
@@ -146,6 +150,11 @@ public class OrderUseCaseImpl implements OrderUseCase {
                 .positive("employeeId", (LongExtractor<Object>) t -> employeeId)
                 .build()
                 .validate();
+    }
+
+    @Override
+    public Order assignOrderToEmployee(Long orderId, Long employeeId) {
+        validateChangeStatusOrder(orderId, employeeId);
 
         Order order = orderRepositoryPort.findById(orderId)
                 .orElseThrow(() -> new OrderNotFoundException(orderId));
@@ -165,5 +174,57 @@ public class OrderUseCaseImpl implements OrderUseCase {
         order.setStatus(OrderStatus.IN_PREPARATION);
 
         return orderRepositoryPort.save(order);
+    }
+
+    private String generateSecurityPin() {
+        SecureRandom random = new SecureRandom();
+        int pin = random.nextInt(9000) + 1000; // PIN de 4 dígitos
+        return String.valueOf(pin);
+    }
+
+    private void sendNotificationOfOrderReady(Order order) {
+        try {
+            User customer = userClientPort.getUserById(order.getCustomerId())
+                    .orElseThrow(() -> new UserNotFoundException(order.getCustomerId()));
+            notificationClientPort.notifyOrderReady(
+                    new OrderReadyNotification(
+                            order.getId(),
+                            customer.getPhoneNumber(),
+                            order.getSecurityPin()
+                    )
+            );
+        } catch (UserNotFoundException e) {
+            log.error("Error no se encontró los datos del cliente con Id {}: {}", order.getCustomerId(), e.getMessage());
+        } catch (Exception e) {
+            log.error("Error enviando notificación SMS para el pedido {}: {}", order.getId(), e.getMessage());
+        }
+    }
+
+    @Override
+    public Order markOrderAsReady(Long orderId, Long employeeId) {
+        validateChangeStatusOrder(orderId, employeeId);
+
+        Order order = orderRepositoryPort.findById(orderId)
+                .orElseThrow(() -> new OrderNotFoundException(orderId));
+
+        if (order.getStatus() != OrderStatus.IN_PREPARATION) {
+            throw new BusinessLogicException("Solo se marcar como listos pedidos en preparación.");
+        }
+
+        User employee = userClientPort.getUserById(employeeId)
+                .orElseThrow(() -> new UserNotFoundException(employeeId));
+
+        if (!Objects.equals(order.getChefId(), employee.getId())) {
+            throw new BusinessLogicException("No puedes marcar como listo que otro empleado esta atendiendo.");
+        }
+
+        order.setStatus(OrderStatus.READY);
+        order.setSecurityPin(generateSecurityPin());
+
+        Order updatedOrder = orderRepositoryPort.save(order);
+
+        sendNotificationOfOrderReady(updatedOrder);
+
+        return updatedOrder;
     }
 }
