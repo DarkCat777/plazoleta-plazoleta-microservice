@@ -1,4 +1,4 @@
-package com.pragma.plazoleta.infrastructure.output.feign.model;
+package com.pragma.plazoleta.infrastructure.output.feign.model.response;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;

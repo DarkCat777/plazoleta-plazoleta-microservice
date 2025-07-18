@@ -1,7 +1,7 @@
 package com.pragma.plazoleta.infrastructure.output.feign.mapper;
 
 import com.pragma.plazoleta.domain.model.OrderCantCanceledNotification;
-import com.pragma.plazoleta.infrastructure.output.feign.model.OrderCantCanceledNotificationRequest;
+import com.pragma.plazoleta.infrastructure.output.feign.model.request.OrderCantCanceledNotificationRequest;
 import org.mapstruct.Mapper;
 import org.mapstruct.MappingConstants;
 

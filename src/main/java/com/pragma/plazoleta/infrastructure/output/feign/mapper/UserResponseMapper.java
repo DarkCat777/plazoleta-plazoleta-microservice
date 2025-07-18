@@ -1,7 +1,7 @@
 package com.pragma.plazoleta.infrastructure.output.feign.mapper;
 
 import com.pragma.plazoleta.domain.model.User;
-import com.pragma.plazoleta.infrastructure.output.feign.model.UserResponse;
+import com.pragma.plazoleta.infrastructure.output.feign.model.response.UserResponse;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.MappingConstants;
