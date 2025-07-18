@@ -6,12 +6,13 @@ import com.pragma.plazoleta.domain.exception.BusinessLogicException;
 import com.pragma.plazoleta.domain.exception.InvalidOwnerException;
 import com.pragma.plazoleta.domain.exception.OrderNotFoundException;
 import com.pragma.plazoleta.domain.model.*;
-import com.pragma.plazoleta.domain.spi.NotificationClientPort;
 import com.pragma.plazoleta.domain.spi.UserClientPort;
 import com.pragma.plazoleta.domain.spi.persistence.DishRepositoryPort;
 import com.pragma.plazoleta.domain.spi.persistence.OrderRepositoryPort;
 import com.pragma.plazoleta.domain.spi.persistence.RestaurantRepositoryPort;
+import com.pragma.plazoleta.domain.usecase.NotificationUseCase;
 import com.pragma.plazoleta.domain.usecase.OrderUseCase;
+import com.pragma.plazoleta.domain.usecase.TraceUseCase;
 import com.pragma.plazoleta.domain.validation.Validation;
 import com.pragma.plazoleta.domain.validation.rules.extractor.LongExtractor;
 import com.pragma.plazoleta.infrastructure.exception.UserNotFoundException;
@@ -31,10 +32,13 @@ import static com.pragma.plazoleta.domain.exception.BusinessLogicException.*;
 public class OrderUseCaseImpl implements OrderUseCase {
 
     private final UserClientPort userClientPort;
-    private final NotificationClientPort notificationClientPort;
+
     private final OrderRepositoryPort orderRepositoryPort;
     private final DishRepositoryPort dishRepositoryPort;
     private final RestaurantRepositoryPort restaurantRepositoryPort;
+
+    private final NotificationUseCase notificationUseCase;
+    private final TraceUseCase traceUseCase;
 
     /**
      * Validación completa de la creación de un pedido.
@@ -118,7 +122,11 @@ public class OrderUseCaseImpl implements OrderUseCase {
         order.setCreatedAt(LocalDateTime.now());
         order.setDishes(details);
 
-        return orderRepositoryPort.save(order);
+        Order updatedOrder = orderRepositoryPort.save(order);
+
+        traceUseCase.traceChangeStatusOrder(updatedOrder, null, OrderStatus.PENDING);
+
+        return updatedOrder;
     }
 
     @Override
@@ -173,31 +181,17 @@ public class OrderUseCaseImpl implements OrderUseCase {
         order.setChefId(employeeId);
         order.setStatus(OrderStatus.IN_PREPARATION);
 
-        return orderRepositoryPort.save(order);
+        Order updatedOrder = orderRepositoryPort.save(order);
+
+        traceUseCase.traceChangeStatusOrder(updatedOrder, OrderStatus.PENDING, OrderStatus.IN_PREPARATION);
+
+        return updatedOrder;
     }
 
     private String generateSecurityPin() {
         SecureRandom random = new SecureRandom();
         int pin = random.nextInt(9000) + 1000; // PIN de 4 dígitos
         return String.valueOf(pin);
-    }
-
-    private void sendNotificationOfOrderReady(Order order) {
-        try {
-            User customer = userClientPort.getUserById(order.getCustomerId())
-                    .orElseThrow(() -> new UserNotFoundException(order.getCustomerId()));
-            notificationClientPort.notifyOrderReady(
-                    new OrderReadyNotification(
-                            order.getId(),
-                            customer.getPhoneNumber(),
-                            order.getSecurityPin()
-                    )
-            );
-        } catch (UserNotFoundException e) {
-            log.error("Error no se encontró los datos del cliente con Id {}: {}", order.getCustomerId(), e.getMessage());
-        } catch (Exception e) {
-            log.error("Error enviando notificación SMS para el pedido {}: {}", order.getId(), e.getMessage());
-        }
     }
 
     @Override
@@ -223,7 +217,9 @@ public class OrderUseCaseImpl implements OrderUseCase {
 
         Order updatedOrder = orderRepositoryPort.save(order);
 
-        sendNotificationOfOrderReady(updatedOrder);
+        notificationUseCase.sendNotificationOfOrderReady(updatedOrder);
+
+        traceUseCase.traceChangeStatusOrder(updatedOrder, OrderStatus.IN_PREPARATION, OrderStatus.READY);
 
         return updatedOrder;
     }
@@ -260,21 +256,11 @@ public class OrderUseCaseImpl implements OrderUseCase {
 
         orderById.setStatus(OrderStatus.DELIVERED);
 
-        return orderRepositoryPort.save(orderById);
-    }
+        Order updatedOrder = orderRepositoryPort.save(orderById);
 
-    private void sendNotificationOfOrderInPreparation(Order order, User customer) {
-        try {
-            notificationClientPort.notifyOrderCantCancelled(
-                    new OrderCantCanceledNotification(
-                            order.getId(),
-                            order.getStatus(),
-                            customer.getPhoneNumber()
-                    )
-            );
-        } catch (Exception e) {
-            log.error("Error enviando notificación SMS para el pedido {}: {}", order.getId(), e.getMessage());
-        }
+        traceUseCase.traceChangeStatusOrder(updatedOrder, OrderStatus.READY, OrderStatus.DELIVERED);
+
+        return updatedOrder;
     }
 
     @Override
@@ -287,24 +273,28 @@ public class OrderUseCaseImpl implements OrderUseCase {
                 .build()
                 .validate();
 
-        Order orderById = orderRepositoryPort.findById(orderId)
+        Order order = orderRepositoryPort.findById(orderId)
                 .orElseThrow(() -> new OrderNotFoundException(orderId));
 
         User customer = userClientPort.getUserById(customerId)
                 .orElseThrow(() -> new UserNotFoundException(customerId));
 
-        if (!Objects.equals(orderById.getCustomerId(), customer.getId())) {
+        if (!Objects.equals(order.getCustomerId(), customer.getId())) {
             throw new BusinessLogicException("No puedes cancelar un pedido que no es tuyo.");
         }
 
-        if (orderById.getStatus() != OrderStatus.PENDING) {
-            sendNotificationOfOrderInPreparation(orderById, customer);
+        if (order.getStatus() != OrderStatus.PENDING) {
+            notificationUseCase.sendNotificationOfOrderInPreparation(order);
             throw new BusinessLogicException("Solo se marcan como cancelados los pedidos que estén en estado pendiente.");
         }
 
-        orderById.setStatus(OrderStatus.CANCELED);
+        order.setStatus(OrderStatus.CANCELED);
 
-        return orderRepositoryPort.save(orderById);
+        Order updatedOrder = orderRepositoryPort.save(order);
+
+        traceUseCase.traceChangeStatusOrder(updatedOrder, OrderStatus.PENDING, OrderStatus.CANCELED);
+
+        return updatedOrder;
     }
 
 }

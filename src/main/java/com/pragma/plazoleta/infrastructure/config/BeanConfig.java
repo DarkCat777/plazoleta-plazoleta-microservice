@@ -2,17 +2,14 @@ package com.pragma.plazoleta.infrastructure.config;
 
 import com.pragma.plazoleta.domain.spi.NotificationClientPort;
 import com.pragma.plazoleta.domain.spi.OwnerValidatorPort;
+import com.pragma.plazoleta.domain.spi.TraceClientPort;
 import com.pragma.plazoleta.domain.spi.UserClientPort;
 import com.pragma.plazoleta.domain.spi.persistence.CategoryRepositoryPort;
 import com.pragma.plazoleta.domain.spi.persistence.DishRepositoryPort;
 import com.pragma.plazoleta.domain.spi.persistence.OrderRepositoryPort;
 import com.pragma.plazoleta.domain.spi.persistence.RestaurantRepositoryPort;
-import com.pragma.plazoleta.domain.usecase.DishUseCase;
-import com.pragma.plazoleta.domain.usecase.OrderUseCase;
-import com.pragma.plazoleta.domain.usecase.RestaurantUseCase;
-import com.pragma.plazoleta.domain.usecase.impl.DishUseCaseImpl;
-import com.pragma.plazoleta.domain.usecase.impl.OrderUseCaseImpl;
-import com.pragma.plazoleta.domain.usecase.impl.RestaurantUseCaseImpl;
+import com.pragma.plazoleta.domain.usecase.*;
+import com.pragma.plazoleta.domain.usecase.impl.*;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -45,21 +42,44 @@ public class BeanConfig {
         );
     }
 
+    @Bean
+    public NotificationUseCase createNotificationUseCase(
+            UserClientPort userClientPort,
+            NotificationClientPort notificationClientPort
+    ) {
+        return new NotificationUseCaseImpl(
+                userClientPort,
+                notificationClientPort
+        );
+    }
+
+    @Bean
+    public TraceUseCase createTraceUseCase(
+            UserClientPort userClientPort,
+            TraceClientPort traceClientPort
+    ) {
+        return new TraceUseCaseImpl(
+                userClientPort,
+                traceClientPort
+        );
+    }
 
     @Bean
     public OrderUseCase createOrderUseCase(
             UserClientPort userClientPort,
-            NotificationClientPort notificationClientPort,
             OrderRepositoryPort orderRepositoryPort,
             DishRepositoryPort dishRepositoryPort,
-            RestaurantRepositoryPort restaurantRepositoryPort
+            RestaurantRepositoryPort restaurantRepositoryPort,
+            NotificationUseCase notificationUseCase,
+            TraceUseCase traceUseCase
     ) {
         return new OrderUseCaseImpl(
                 userClientPort,
-                notificationClientPort,
                 orderRepositoryPort,
                 dishRepositoryPort,
-                restaurantRepositoryPort
+                restaurantRepositoryPort,
+                notificationUseCase,
+                traceUseCase
         );
     }
 

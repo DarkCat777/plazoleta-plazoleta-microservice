@@ -1,7 +1,7 @@
 package com.pragma.plazoleta.infrastructure.output.feign.mapper;
 
 import com.pragma.plazoleta.domain.model.OrderReadyNotification;
-import com.pragma.plazoleta.infrastructure.output.feign.model.OrderReadyNotificationRequest;
+import com.pragma.plazoleta.infrastructure.output.feign.model.request.OrderReadyNotificationRequest;
 import org.mapstruct.Mapper;
 import org.mapstruct.MappingConstants;
 
