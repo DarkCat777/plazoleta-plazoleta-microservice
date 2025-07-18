@@ -57,6 +57,6 @@ public class OrderServiceImpl implements OrderService {
 
     @Override
     public OrderResponse markOrderAsCancelled(Long orderId, Long customerId) {
-        return orderResponseMapper.toResponse(orderUseCase.markOrderAsCancelled(orderId, customerId));
+        return orderResponseMapper.toResponse(orderUseCase.markOrderAsCanceled(orderId, customerId));
     }
 }

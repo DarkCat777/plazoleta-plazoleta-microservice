@@ -6,19 +6,21 @@ import com.pragma.plazoleta.domain.exception.BusinessLogicException;
 import com.pragma.plazoleta.domain.exception.InvalidOwnerException;
 import com.pragma.plazoleta.domain.exception.OrderNotFoundException;
 import com.pragma.plazoleta.domain.model.*;
-import com.pragma.plazoleta.domain.spi.NotificationClientPort;
 import com.pragma.plazoleta.domain.spi.UserClientPort;
 import com.pragma.plazoleta.domain.spi.persistence.DishRepositoryPort;
 import com.pragma.plazoleta.domain.spi.persistence.OrderRepositoryPort;
 import com.pragma.plazoleta.domain.spi.persistence.RestaurantRepositoryPort;
+import com.pragma.plazoleta.domain.usecase.NotificationUseCase;
+import com.pragma.plazoleta.domain.usecase.OrderUseCase;
+import com.pragma.plazoleta.domain.usecase.TraceUseCase;
 import com.pragma.plazoleta.domain.validation.errors.impl.FieldError;
 import com.pragma.plazoleta.domain.validation.exception.ValidationException;
 import com.pragma.plazoleta.infrastructure.exception.UserNotFoundException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.ArgumentCaptor;
 
 import java.util.List;
+import java.util.Optional;
 
 import static com.pragma.plazoleta.domain.exception.BusinessLogicException.*;
 import static org.junit.jupiter.api.Assertions.*;
@@ -27,22 +29,35 @@ import static org.mockito.Mockito.*;
 class OrderUseCaseImplTest {
 
     private UserClientPort userClientPort;
-    private NotificationClientPort notificationClientPort;
     private OrderRepositoryPort orderRepositoryPort;
     private DishRepositoryPort dishRepositoryPort;
     private RestaurantRepositoryPort restaurantRepositoryPort;
-    private OrderUseCaseImpl orderUseCase;
+    private NotificationUseCase notificationUseCase;
+    private TraceUseCase traceUseCase;
+
+    private OrderUseCase orderUseCase;
 
     @BeforeEach
     void setUp() {
         userClientPort = mock(UserClientPort.class);
-        notificationClientPort = mock(NotificationClientPort.class);
         orderRepositoryPort = mock(OrderRepositoryPort.class);
         dishRepositoryPort = mock(DishRepositoryPort.class);
         restaurantRepositoryPort = mock(RestaurantRepositoryPort.class);
-        orderUseCase = new OrderUseCaseImpl(userClientPort, notificationClientPort, orderRepositoryPort, dishRepositoryPort, restaurantRepositoryPort);
+        notificationUseCase = mock(NotificationUseCase.class);
+        traceUseCase = mock(TraceUseCase.class);
+        orderUseCase = new OrderUseCaseImpl(
+                userClientPort,
+                orderRepositoryPort,
+                dishRepositoryPort,
+                restaurantRepositoryPort,
+                notificationUseCase,
+                traceUseCase
+        );
     }
 
+    /* ------------------------------------------------------------------
+     * createOrder
+     * ------------------------------------------------------------------ */
     @Test
     void createOrder_success() {
         Dish dish = Dish.builder().id(1L).restaurant(Restaurant.builder().id(1L).build()).build();
@@ -63,6 +78,11 @@ class OrderUseCaseImplTest {
         assertEquals(1L, result.getCustomerId());
         assertNotNull(result.getCreatedAt());
         assertEquals(1, result.getDishes().size());
+
+        // Se registra trazabilidad: prev=null, new=PENDING
+        verify(traceUseCase).traceChangeStatusOrder(result, null, null, OrderStatus.PENDING);
+        // No notificación en creación
+        verifyNoInteractions(notificationUseCase);
     }
 
     @Test
@@ -76,6 +96,7 @@ class OrderUseCaseImplTest {
 
         BusinessLogicException ex = assertThrows(BusinessLogicException.class, () -> orderUseCase.createOrder(1L, order));
         assertEquals(RESTAURANT_NOT_EXIST, ex.getMessage());
+        verifyNoInteractions(notificationUseCase, traceUseCase);
     }
 
     @Test
@@ -90,6 +111,7 @@ class OrderUseCaseImplTest {
 
         BusinessLogicException ex = assertThrows(BusinessLogicException.class, () -> orderUseCase.createOrder(1L, order));
         assertEquals(DISH_NOT_EXIST, ex.getMessage());
+        verifyNoInteractions(notificationUseCase, traceUseCase);
     }
 
     @Test
@@ -105,20 +127,27 @@ class OrderUseCaseImplTest {
 
         BusinessLogicException ex = assertThrows(BusinessLogicException.class, () -> orderUseCase.createOrder(1L, order));
         assertEquals(DISHES_ARE_NOT_SAME_RESTAURANT, ex.getMessage());
+        verifyNoInteractions(notificationUseCase, traceUseCase);
     }
 
     @Test
     void createOrder_shouldThrowWhenCustomerHasActiveOrder() {
         Order order = Order.builder().restaurantId(1L)
-                .dishes(List.of(new OrderDetail(null, Dish.builder().id(1L).restaurant(Restaurant.builder().id(1L).build()).build(), 1)))
+                .dishes(List.of(new OrderDetail(null,
+                        Dish.builder().id(1L).restaurant(Restaurant.builder().id(1L).build()).build(), 1)))
                 .build();
 
         when(orderRepositoryPort.existsByCustomerIdAndStatusIn(eq(1L), anyList())).thenReturn(true);
 
         BusinessLogicException ex = assertThrows(BusinessLogicException.class, () -> orderUseCase.createOrder(1L, order));
         assertEquals(PENDING_ORDER, ex.getMessage());
+        verifyNoInteractions(notificationUseCase, traceUseCase);
     }
 
+
+    /* ------------------------------------------------------------------
+     * findOrdersByStatusForEmployee
+     * ------------------------------------------------------------------ */
     @Test
     void findOrdersByStatusForEmployee_success() {
         Long employeeId = 100L;
@@ -141,6 +170,7 @@ class OrderUseCaseImplTest {
         assertEquals(expectedResult, result);
         verify(userClientPort).getUserById(employeeId);
         verify(orderRepositoryPort).findByRestaurantIdAndStatus(restaurantId, status, paginationQuery);
+        verifyNoInteractions(notificationUseCase, traceUseCase);
     }
 
     @Test
@@ -155,6 +185,7 @@ class OrderUseCaseImplTest {
                 () -> orderUseCase.findOrdersByStatusForEmployee(employeeId, status, paginationQuery));
 
         assertEquals("No se ha encontrado el usuario propietario", exception.getMessage());
+        verifyNoInteractions(notificationUseCase, traceUseCase);
     }
 
     @Test
@@ -173,6 +204,7 @@ class OrderUseCaseImplTest {
                 () -> orderUseCase.findOrdersByStatusForEmployee(employeeId, status, paginationQuery));
 
         assertEquals("El usuario propietario no tiene un restaurante", exception.getMessage());
+        verifyNoInteractions(notificationUseCase, traceUseCase);
     }
 
     @Test
@@ -185,8 +217,13 @@ class OrderUseCaseImplTest {
                 () -> orderUseCase.findOrdersByStatusForEmployee(employeeId, status, paginationQuery));
 
         assertTrue(((FieldError) exception.getErrors().get(0)).getField().contains("status"));
+        verifyNoInteractions(notificationUseCase, traceUseCase);
     }
 
+
+    /* ------------------------------------------------------------------
+     * assignOrderToEmployee
+     * ------------------------------------------------------------------ */
     @Test
     void assignOrderToEmployee_success() {
         Long orderId = 1L;
@@ -212,6 +249,9 @@ class OrderUseCaseImplTest {
         assertEquals(OrderStatus.IN_PREPARATION, result.getStatus());
         assertEquals(employeeId, result.getChefId());
         verify(orderRepositoryPort).save(order);
+
+        verify(traceUseCase).traceChangeStatusOrder(result, employeeId, OrderStatus.PENDING, OrderStatus.IN_PREPARATION);
+        verifyNoInteractions(notificationUseCase);
     }
 
     @Test
@@ -219,10 +259,11 @@ class OrderUseCaseImplTest {
         Long orderId = 1L;
         Long employeeId = 100L;
 
-        when(orderRepositoryPort.findById(orderId)).thenReturn(java.util.Optional.empty());
+        when(orderRepositoryPort.findById(orderId)).thenReturn(Optional.empty());
 
         assertThrows(OrderNotFoundException.class, () ->
                 orderUseCase.assignOrderToEmployee(orderId, employeeId));
+        verifyNoInteractions(notificationUseCase, traceUseCase);
     }
 
     @Test
@@ -235,10 +276,11 @@ class OrderUseCaseImplTest {
                 .restaurantId(10L)
                 .build();
 
-        when(orderRepositoryPort.findById(orderId)).thenReturn(java.util.Optional.of(order));
+        when(orderRepositoryPort.findById(orderId)).thenReturn(Optional.of(order));
 
         assertThrows(BusinessLogicException.class, () ->
                 orderUseCase.assignOrderToEmployee(orderId, employeeId));
+        verifyNoInteractions(notificationUseCase, traceUseCase);
     }
 
     @Test
@@ -252,11 +294,12 @@ class OrderUseCaseImplTest {
                 .restaurantId(10L)
                 .build();
 
-        when(orderRepositoryPort.findById(orderId)).thenReturn(java.util.Optional.of(order));
-        when(userClientPort.getUserById(employeeId)).thenReturn(java.util.Optional.empty());
+        when(orderRepositoryPort.findById(orderId)).thenReturn(Optional.of(order));
+        when(userClientPort.getUserById(employeeId)).thenReturn(Optional.empty());
 
         assertThrows(UserNotFoundException.class, () ->
                 orderUseCase.assignOrderToEmployee(orderId, employeeId));
+        verifyNoInteractions(notificationUseCase, traceUseCase);
     }
 
     @Test
@@ -274,85 +317,94 @@ class OrderUseCaseImplTest {
         employee.setId(employeeId);
         employee.setRestaurantId(99L); // otro restaurante
 
-        when(orderRepositoryPort.findById(orderId)).thenReturn(java.util.Optional.of(order));
-        when(userClientPort.getUserById(employeeId)).thenReturn(java.util.Optional.of(employee));
+        when(orderRepositoryPort.findById(orderId)).thenReturn(Optional.of(order));
+        when(userClientPort.getUserById(employeeId)).thenReturn(Optional.of(employee));
 
         assertThrows(BusinessLogicException.class, () ->
                 orderUseCase.assignOrderToEmployee(orderId, employeeId));
+        verifyNoInteractions(notificationUseCase, traceUseCase);
     }
 
+
+    /* ------------------------------------------------------------------
+     * markOrderAsReady
+     * ------------------------------------------------------------------ */
     @Test
-    void sendNotificationOfOrderReady_success() {
+    void markOrderAsReady_success() {
+        Long orderId = 1L;
+        Long employeeId = 100L;
+
         Order order = Order.builder()
-                .id(1L)
+                .id(orderId)
+                .status(OrderStatus.IN_PREPARATION)
+                .chefId(employeeId)
                 .customerId(50L)
-                .securityPin("1234")
                 .build();
 
-        User customer = new User();
-        customer.setId(50L);
-        customer.setPhoneNumber("+51987654321");
+        User employee = new User();
+        employee.setId(employeeId);
 
-        when(userClientPort.getUserById(50L)).thenReturn(java.util.Optional.of(customer));
+        when(orderRepositoryPort.findById(orderId)).thenReturn(Optional.of(order));
+        when(userClientPort.getUserById(employeeId)).thenReturn(Optional.of(employee));
+        when(orderRepositoryPort.save(any(Order.class))).thenAnswer(inv -> inv.getArgument(0));
 
-        // Ejecutar método privado mediante reflexión o a través de markOrderAsReady
-        orderUseCaseTestHelperInvokeSendNotification(order);
+        Order result = orderUseCase.markOrderAsReady(orderId, employeeId);
 
-        // Capturar el argumento
-        ArgumentCaptor<OrderReadyNotification> captor = ArgumentCaptor.forClass(OrderReadyNotification.class);
-        verify(notificationClientPort).notifyOrderReady(captor.capture());
+        assertEquals(OrderStatus.READY, result.getStatus());
+        assertNotNull(result.getSecurityPin());
+        assertEquals(4, result.getSecurityPin().length());
 
-        OrderReadyNotification sentNotification = captor.getValue();
-        assertEquals(1L, sentNotification.getOrderId());
-        assertEquals("+51987654321", sentNotification.getCustomerPhone());
-        assertEquals("1234", sentNotification.getSecurityPin());
+        verify(orderRepositoryPort).save(order);
+        verify(notificationUseCase).sendNotificationOfOrderReady(result);
+        verify(traceUseCase).traceChangeStatusOrder(result, employeeId, OrderStatus.IN_PREPARATION, OrderStatus.READY);
     }
 
     @Test
-    void sendNotificationOfOrderReady_shouldHandleUserNotFound() {
-        Order order = Order.builder().id(1L).customerId(99L).build();
-
-        when(userClientPort.getUserById(99L)).thenReturn(java.util.Optional.empty());
-
-        orderUseCaseTestHelperInvokeSendNotification(order);
-
-        verify(notificationClientPort, never()).notifyOrderReady(any());
+    void markOrderAsReady_shouldThrowWhenOrderNotFound() {
+        when(orderRepositoryPort.findById(1L)).thenReturn(Optional.empty());
+        assertThrows(OrderNotFoundException.class, () -> orderUseCase.markOrderAsReady(1L, 10L));
+        verifyNoInteractions(notificationUseCase, traceUseCase);
     }
 
     @Test
-    void sendNotificationOfOrderReady_shouldHandleNotificationFailure() {
-        Order order = Order.builder()
-                .id(1L)
-                .customerId(50L)
-                .securityPin("1234")
-                .build();
+    void markOrderAsReady_shouldThrowWhenOrderNotInPreparation() {
+        Order order = Order.builder().id(1L).status(OrderStatus.PENDING).build();
+        when(orderRepositoryPort.findById(1L)).thenReturn(Optional.of(order));
 
-        User customer = new User();
-        customer.setId(50L);
-        customer.setPhoneNumber("+51987654321");
-
-        when(userClientPort.getUserById(50L)).thenReturn(java.util.Optional.of(customer));
-        doThrow(new RuntimeException("Notification error"))
-                .when(notificationClientPort).notifyOrderReady(any());
-
-        orderUseCaseTestHelperInvokeSendNotification(order);
-
-        verify(notificationClientPort).notifyOrderReady(any());
-        // No debe lanzar excepción
+        BusinessLogicException ex = assertThrows(BusinessLogicException.class,
+                () -> orderUseCase.markOrderAsReady(1L, 10L));
+        assertTrue(ex.getMessage().contains("Solo se marcar como listos"));
+        verifyNoInteractions(notificationUseCase, traceUseCase);
     }
 
-    // Método auxiliar para invocar el método privado usando reflexión
-    private void orderUseCaseTestHelperInvokeSendNotification(Order order) {
-        try {
-            java.lang.reflect.Method method = OrderUseCaseImpl.class
-                    .getDeclaredMethod("sendNotificationOfOrderReady", Order.class);
-            method.setAccessible(true);
-            method.invoke(orderUseCase, order);
-        } catch (Exception e) {
-            fail("Error invoking private method: " + e.getMessage());
-        }
+    @Test
+    void markOrderAsReady_shouldThrowWhenEmployeeNotFound() {
+        Order order = Order.builder().id(1L).status(OrderStatus.IN_PREPARATION).chefId(10L).build();
+        when(orderRepositoryPort.findById(1L)).thenReturn(Optional.of(order));
+        when(userClientPort.getUserById(20L)).thenReturn(Optional.empty());
+
+        assertThrows(UserNotFoundException.class, () -> orderUseCase.markOrderAsReady(1L, 20L));
+        verifyNoInteractions(notificationUseCase, traceUseCase);
     }
 
+    @Test
+    void markOrderAsReady_shouldThrowWhenEmployeeMismatch() {
+        Order order = Order.builder().id(1L).status(OrderStatus.IN_PREPARATION).chefId(10L).build();
+        User otherEmp = new User();
+        otherEmp.setId(20L);
+        when(orderRepositoryPort.findById(1L)).thenReturn(Optional.of(order));
+        when(userClientPort.getUserById(20L)).thenReturn(Optional.of(otherEmp));
+
+        BusinessLogicException ex = assertThrows(BusinessLogicException.class,
+                () -> orderUseCase.markOrderAsReady(1L, 20L));
+        assertTrue(ex.getMessage().contains("No puedes marcar como listo"));
+        verifyNoInteractions(notificationUseCase, traceUseCase);
+    }
+
+
+    /* ------------------------------------------------------------------
+     * markOrderAsDelivered
+     * ------------------------------------------------------------------ */
     @Test
     void markOrderAsDelivered_success() {
         Long orderId = 1L;
@@ -369,113 +421,99 @@ class OrderUseCaseImplTest {
         User employee = new User();
         employee.setId(employeeId);
 
-        when(orderRepositoryPort.findById(orderId)).thenReturn(java.util.Optional.of(order));
-        when(userClientPort.getUserById(employeeId)).thenReturn(java.util.Optional.of(employee));
+        when(orderRepositoryPort.findById(orderId)).thenReturn(Optional.of(order));
+        when(userClientPort.getUserById(employeeId)).thenReturn(Optional.of(employee));
         when(orderRepositoryPort.save(any(Order.class))).thenAnswer(inv -> inv.getArgument(0));
 
         Order result = orderUseCase.markOrderAsDelivered(orderId, employeeId, pin);
 
         assertEquals(OrderStatus.DELIVERED, result.getStatus());
         verify(orderRepositoryPort).save(order);
+        verify(traceUseCase).traceChangeStatusOrder(result, employeeId, OrderStatus.READY, OrderStatus.DELIVERED);
+        verifyNoInteractions(notificationUseCase);
     }
 
     @Test
     void markOrderAsDelivered_shouldThrowWhenOrderNotFound() {
-        Long orderId = 1L;
-        Long employeeId = 100L;
-
-        when(orderRepositoryPort.findById(orderId)).thenReturn(java.util.Optional.empty());
-
+        when(orderRepositoryPort.findById(1L)).thenReturn(Optional.empty());
         assertThrows(OrderNotFoundException.class,
-                () -> orderUseCase.markOrderAsDelivered(orderId, employeeId, "1234"));
+                () -> orderUseCase.markOrderAsDelivered(1L, 10L, "1234"));
+        verifyNoInteractions(notificationUseCase, traceUseCase);
     }
 
     @Test
     void markOrderAsDelivered_shouldThrowWhenOrderNotReady() {
-        Long orderId = 1L;
-        Long employeeId = 100L;
-
-        Order order = Order.builder()
-                .id(orderId)
-                .status(OrderStatus.IN_PREPARATION) // no READY
-                .build();
-
-        when(orderRepositoryPort.findById(orderId)).thenReturn(java.util.Optional.of(order));
+        Order order = Order.builder().id(1L).status(OrderStatus.IN_PREPARATION).build();
+        when(orderRepositoryPort.findById(1L)).thenReturn(Optional.of(order));
 
         BusinessLogicException ex = assertThrows(BusinessLogicException.class,
-                () -> orderUseCase.markOrderAsDelivered(orderId, employeeId, "1234"));
-        assertTrue(ex.getMessage().contains("Solo se marcar"));
+                () -> orderUseCase.markOrderAsDelivered(1L, 10L, "1234"));
+        assertTrue(ex.getMessage().contains("Solo se marcar como listos"));
+        verifyNoInteractions(notificationUseCase, traceUseCase);
     }
 
     @Test
     void markOrderAsDelivered_shouldThrowWhenInvalidPin() {
-        Long orderId = 1L;
-        Long employeeId = 100L;
-
         Order order = Order.builder()
-                .id(orderId)
+                .id(1L)
                 .status(OrderStatus.READY)
-                .chefId(employeeId)
-                .securityPin("1234") // real
+                .chefId(10L)
+                .securityPin("1234")
                 .build();
+        User emp = new User();
+        emp.setId(10L);
 
-        User employee = new User();
-        employee.setId(employeeId);
-
-        when(orderRepositoryPort.findById(orderId)).thenReturn(java.util.Optional.of(order));
-        when(userClientPort.getUserById(employeeId)).thenReturn(java.util.Optional.of(employee));
+        when(orderRepositoryPort.findById(1L)).thenReturn(Optional.of(order));
+        when(userClientPort.getUserById(10L)).thenReturn(Optional.of(emp));
 
         BusinessLogicException ex = assertThrows(BusinessLogicException.class,
-                () -> orderUseCase.markOrderAsDelivered(orderId, employeeId, "9999")); // distinto
+                () -> orderUseCase.markOrderAsDelivered(1L, 10L, "9999"));
         assertTrue(ex.getMessage().contains("pin"));
+        verifyNoInteractions(notificationUseCase, traceUseCase);
     }
 
     @Test
     void markOrderAsDelivered_shouldThrowWhenEmployeeNotFound() {
-        Long orderId = 1L;
-        Long employeeId = 100L;
-        String pin = "1234";
-
         Order order = Order.builder()
-                .id(orderId)
+                .id(1L)
                 .status(OrderStatus.READY)
-                .chefId(employeeId)
-                .securityPin(pin)
+                .chefId(10L)
+                .securityPin("1234")
                 .build();
-
-        when(orderRepositoryPort.findById(orderId)).thenReturn(java.util.Optional.of(order));
-        when(userClientPort.getUserById(employeeId)).thenReturn(java.util.Optional.empty());
+        when(orderRepositoryPort.findById(1L)).thenReturn(Optional.of(order));
+        when(userClientPort.getUserById(20L)).thenReturn(Optional.empty());
 
         assertThrows(UserNotFoundException.class,
-                () -> orderUseCase.markOrderAsDelivered(orderId, employeeId, pin));
+                () -> orderUseCase.markOrderAsDelivered(1L, 20L, "1234"));
+        verifyNoInteractions(notificationUseCase, traceUseCase);
     }
 
     @Test
     void markOrderAsDelivered_shouldThrowWhenEmployeeMismatch() {
-        Long orderId = 1L;
-        Long employeeId = 100L;      // quien intenta marcar
-        Long otherChefId = 200L;     // quien preparó
-
         Order order = Order.builder()
-                .id(orderId)
+                .id(1L)
                 .status(OrderStatus.READY)
-                .chefId(otherChefId) // diferente
+                .chefId(10L)
                 .securityPin("1234")
                 .build();
+        User emp = new User();
+        emp.setId(20L);
 
-        User employee = new User();
-        employee.setId(employeeId);
-
-        when(orderRepositoryPort.findById(orderId)).thenReturn(java.util.Optional.of(order));
-        when(userClientPort.getUserById(employeeId)).thenReturn(java.util.Optional.of(employee));
+        when(orderRepositoryPort.findById(1L)).thenReturn(Optional.of(order));
+        when(userClientPort.getUserById(20L)).thenReturn(Optional.of(emp));
 
         BusinessLogicException ex = assertThrows(BusinessLogicException.class,
-                () -> orderUseCase.markOrderAsDelivered(orderId, employeeId, "1234"));
+                () -> orderUseCase.markOrderAsDelivered(1L, 20L, "1234"));
         assertTrue(ex.getMessage().contains("entregado"));
+        verifyNoInteractions(notificationUseCase, traceUseCase);
     }
 
+
+    /* ------------------------------------------------------------------
+     * markOrderAsCancelled
+     * ------------------------------------------------------------------ */
     @Test
-    void markOrderAsCancelled_success() {
+    void markOrderAsCanceled_success() {
         Long orderId = 1L;
         Long customerId = 50L;
 
@@ -488,20 +526,20 @@ class OrderUseCaseImplTest {
         User customer = new User();
         customer.setId(customerId);
 
-        when(orderRepositoryPort.findById(orderId)).thenReturn(java.util.Optional.of(order));
-        when(userClientPort.getUserById(customerId)).thenReturn(java.util.Optional.of(customer));
+        when(orderRepositoryPort.findById(orderId)).thenReturn(Optional.of(order));
+        when(userClientPort.getUserById(customerId)).thenReturn(Optional.of(customer));
         when(orderRepositoryPort.save(any(Order.class))).thenAnswer(inv -> inv.getArgument(0));
 
-        Order result = orderUseCase.markOrderAsCancelled(orderId, customerId);
+        Order result = orderUseCase.markOrderAsCanceled(orderId, customerId);
 
         assertEquals(OrderStatus.CANCELED, result.getStatus());
         verify(orderRepositoryPort).save(order);
-        // No se debe notificar
-        verify(notificationClientPort, never()).notifyOrderCantCancelled(any());
+        verify(traceUseCase).traceChangeStatusOrder(result, null, OrderStatus.PENDING, OrderStatus.CANCELED);
+        verifyNoInteractions(notificationUseCase);
     }
 
     @Test
-    void markOrderAsCancelled_notPending_sendsNotificationAndThrows() {
+    void markOrderAsCanceled_notPending_sendsNotificationAndThrows() {
         Long orderId = 1L;
         Long customerId = 50L;
 
@@ -513,52 +551,48 @@ class OrderUseCaseImplTest {
 
         User customer = new User();
         customer.setId(customerId);
-        customer.setPhoneNumber("+51987654321");
 
-        when(orderRepositoryPort.findById(orderId)).thenReturn(java.util.Optional.of(order));
-        when(userClientPort.getUserById(customerId)).thenReturn(java.util.Optional.of(customer));
+        when(orderRepositoryPort.findById(orderId)).thenReturn(Optional.of(order));
+        when(userClientPort.getUserById(customerId)).thenReturn(Optional.of(customer));
 
         BusinessLogicException ex = assertThrows(BusinessLogicException.class,
-                () -> orderUseCase.markOrderAsCancelled(orderId, customerId));
-        assertTrue(ex.getMessage().contains("Solo se marcan")); // ajusta al mensaje final
+                () -> orderUseCase.markOrderAsCanceled(orderId, customerId));
+        assertTrue(ex.getMessage().contains("Solo se marcan"));
 
-        // Capturamos la notificación
-        ArgumentCaptor<OrderCantCanceledNotification> captor = ArgumentCaptor.forClass(OrderCantCanceledNotification.class);
-        verify(notificationClientPort).notifyOrderCantCancelled(captor.capture());
-
-        OrderCantCanceledNotification sent = captor.getValue();
-        assertEquals(orderId, sent.getOrderId());
-        assertEquals(OrderStatus.IN_PREPARATION, sent.getOrderStatus());
-        assertEquals("+51987654321", sent.getCustomerPhone());
+        // Notificación de que no puede cancelarse
+        verify(notificationUseCase).sendNotificationOfOrderInPreparation(order);
+        verifyNoInteractions(traceUseCase);
     }
 
     @Test
-    void markOrderAsCancelled_notPending_notificationFailsStillThrows() {
-        Long orderId = 1L;
-        Long customerId = 50L;
-
-        Order order = Order.builder()
-                .id(orderId)
-                .status(OrderStatus.READY)
-                .customerId(customerId)
-                .build();
-
-        User customer = new User();
-        customer.setId(customerId);
-        customer.setPhoneNumber("+51900000000");
-
-        when(orderRepositoryPort.findById(orderId)).thenReturn(java.util.Optional.of(order));
-        when(userClientPort.getUserById(customerId)).thenReturn(java.util.Optional.of(customer));
-        doThrow(new RuntimeException("Twilio fail"))
-                .when(notificationClientPort).notifyOrderCantCancelled(any());
-
-        BusinessLogicException ex = assertThrows(BusinessLogicException.class,
-                () -> orderUseCase.markOrderAsCancelled(orderId, customerId));
-        assertTrue(ex.getMessage().contains("Solo se marcan")); // mensaje esperado
-
-        // Se intentó notificar aunque falló
-        verify(notificationClientPort).notifyOrderCantCancelled(any());
+    void markOrderAsCancelled_shouldThrowWhenOrderNotFound() {
+        when(orderRepositoryPort.findById(1L)).thenReturn(Optional.empty());
+        assertThrows(OrderNotFoundException.class, () -> orderUseCase.markOrderAsCanceled(1L, 2L));
+        verifyNoInteractions(notificationUseCase, traceUseCase);
     }
 
+    @Test
+    void markOrderAsCanceled_shouldThrowWhenCustomerNotFound() {
+        Order order = Order.builder().id(1L).status(OrderStatus.PENDING).customerId(100L).build();
+        when(orderRepositoryPort.findById(1L)).thenReturn(Optional.of(order));
+        when(userClientPort.getUserById(2L)).thenReturn(Optional.empty());
 
+        assertThrows(UserNotFoundException.class, () -> orderUseCase.markOrderAsCanceled(1L, 2L));
+        verifyNoInteractions(notificationUseCase, traceUseCase);
+    }
+
+    @Test
+    void markOrderAsCancelled_shouldThrowWhenOrderBelongsToAnotherCustomer() {
+        Order order = Order.builder().id(1L).status(OrderStatus.PENDING).customerId(100L).build();
+        User customer = new User();
+        customer.setId(2L);
+
+        when(orderRepositoryPort.findById(1L)).thenReturn(Optional.of(order));
+        when(userClientPort.getUserById(2L)).thenReturn(Optional.of(customer));
+
+        BusinessLogicException ex = assertThrows(BusinessLogicException.class,
+                () -> orderUseCase.markOrderAsCanceled(1L, 2L));
+        assertTrue(ex.getMessage().contains("No puedes cancelar"));
+        verifyNoInteractions(notificationUseCase, traceUseCase);
+    }
 }

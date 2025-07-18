@@ -124,7 +124,7 @@ public class OrderUseCaseImpl implements OrderUseCase {
 
         Order updatedOrder = orderRepositoryPort.save(order);
 
-        traceUseCase.traceChangeStatusOrder(updatedOrder, null, OrderStatus.PENDING);
+        traceUseCase.traceChangeStatusOrder(updatedOrder, null, null, OrderStatus.PENDING);
 
         return updatedOrder;
     }
@@ -183,7 +183,7 @@ public class OrderUseCaseImpl implements OrderUseCase {
 
         Order updatedOrder = orderRepositoryPort.save(order);
 
-        traceUseCase.traceChangeStatusOrder(updatedOrder, OrderStatus.PENDING, OrderStatus.IN_PREPARATION);
+        traceUseCase.traceChangeStatusOrder(updatedOrder, employeeId, OrderStatus.PENDING, OrderStatus.IN_PREPARATION);
 
         return updatedOrder;
     }
@@ -219,7 +219,7 @@ public class OrderUseCaseImpl implements OrderUseCase {
 
         notificationUseCase.sendNotificationOfOrderReady(updatedOrder);
 
-        traceUseCase.traceChangeStatusOrder(updatedOrder, OrderStatus.IN_PREPARATION, OrderStatus.READY);
+        traceUseCase.traceChangeStatusOrder(updatedOrder, employeeId, OrderStatus.IN_PREPARATION, OrderStatus.READY);
 
         return updatedOrder;
     }
@@ -258,13 +258,13 @@ public class OrderUseCaseImpl implements OrderUseCase {
 
         Order updatedOrder = orderRepositoryPort.save(orderById);
 
-        traceUseCase.traceChangeStatusOrder(updatedOrder, OrderStatus.READY, OrderStatus.DELIVERED);
+        traceUseCase.traceChangeStatusOrder(updatedOrder, employeeId, OrderStatus.READY, OrderStatus.DELIVERED);
 
         return updatedOrder;
     }
 
     @Override
-    public Order markOrderAsCancelled(Long orderId, Long customerId) {
+    public Order markOrderAsCanceled(Long orderId, Long customerId) {
         Validation.builder(null)
                 .notNull("orderId", t -> orderId)
                 .positive("orderId", (LongExtractor<Object>) t -> orderId)
@@ -292,7 +292,7 @@ public class OrderUseCaseImpl implements OrderUseCase {
 
         Order updatedOrder = orderRepositoryPort.save(order);
 
-        traceUseCase.traceChangeStatusOrder(updatedOrder, OrderStatus.PENDING, OrderStatus.CANCELED);
+        traceUseCase.traceChangeStatusOrder(updatedOrder, null, OrderStatus.PENDING, OrderStatus.CANCELED);
 
         return updatedOrder;
     }

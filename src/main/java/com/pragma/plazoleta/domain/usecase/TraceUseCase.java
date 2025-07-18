@@ -5,6 +5,6 @@ import com.pragma.plazoleta.domain.model.OrderStatus;
 
 public interface TraceUseCase {
 
-    void traceChangeStatusOrder(Order order, OrderStatus prevStatus, OrderStatus nextStatus);
+    void traceChangeStatusOrder(Order order, Long employeeId, OrderStatus prevStatus, OrderStatus nextStatus);
 
 }

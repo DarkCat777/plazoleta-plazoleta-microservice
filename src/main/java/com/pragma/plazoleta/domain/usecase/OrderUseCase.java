@@ -15,5 +15,5 @@ public interface OrderUseCase {
 
     Order markOrderAsDelivered(Long orderId, Long employeeId, String securityPin);
 
-    Order markOrderAsCancelled(Long orderId, Long customerId);
+    Order markOrderAsCanceled(Long orderId, Long customerId);
 }

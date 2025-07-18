@@ -19,12 +19,12 @@ public class TraceUseCaseImpl implements TraceUseCase {
     private final TraceClientPort traceClientPort;
 
     @Override
-    public void traceChangeStatusOrder(Order order, OrderStatus prevStatus, OrderStatus nextStatus) {
+    public void traceChangeStatusOrder(Order order, Long employeeId, OrderStatus prevStatus, OrderStatus nextStatus) {
         try {
             User customer = userClientPort.getUserById(order.getCustomerId())
                     .orElseThrow(() -> new UserNotFoundException(order.getCustomerId()));
 
-            User employee = userClientPort.getUserById(order.getCustomerId())
+            User employee = userClientPort.getUserById(employeeId)
                     .orElseThrow(() -> new UserNotFoundException(order.getCustomerId()));
 
             OrderTrace orderTrace = OrderTrace.builder()
